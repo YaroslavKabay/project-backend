@@ -1,0 +1,189 @@
+// Project Backend - Investment Platform
+// Prisma Schema для інвестиційної платформи
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== ENUMS =====
+
+enum TransactionType {
+  DEPOSIT            // користувач поповнив свій баланс 
+  WITHDRAWAL         // користувач вивів кошти зі свого балансу 
+  DIVIDEND_PAYMENT   // виплата дивідендів від інвестиції 
+  INVESTMENT_PURCHASE // покупка нової інвестиції (списання з балансу) 
+  INVESTMENT_SALE    // продаж інвестиції (зарахування на баланс) 
+  FEE_CHARGE         // списання комісії за послуги 
+  REFUND_ISSUED      // повернення коштів (відміна операції)
+}
+
+enum InvestmentStatus {
+  ACTIVE    // активна інвестиція
+  SOLD      // продана
+  PAUSED    // призупинена
+}
+
+enum DividendStatus {
+  PENDING   // очікує виплати
+  PAID      // виплачено
+  CANCELLED // скасовано
+}
+
+enum UserRole {
+  ADMIN   // повний доступ
+  USER    // доступ лише до власних інвестицій
+  MANAGER // обмежений доступ до управління проєктами
+}
+
+// ===== MODELS =====
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  surname      String
+  email        String   @unique
+  phone        String?
+  balance      Float    @default(0)
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  userProjects UserProject[]
+  permissions  Permission[]
+  transactions Transaction[]
+  dividends    Dividend[]
+
+  @@map("users")
+}
+
+model Project {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String?
+  targetAmount     Float
+  totalInvested    Float    @default(0)
+  profitPercentage Float
+  capitalization   Float    @default(0)
+  dividends        Float    @default(0)
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relationships
+  userProjects   UserProject[]
+  marketingCard  MarketingCard?
+
+  @@map("projects")
+}
+
+model UserProject {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  projectId        Int
+  totalInvested    Float    @default(0)
+  profitPercentage Float    @default(0)
+  capitalization   Float    @default(0)
+  dividends        Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relationships
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  investments Investment[]
+
+  @@unique([userId, projectId])
+  @@map("user_projects")
+}
+
+model Investment {
+  id               Int              @id @default(autoincrement())
+  userProjectId    Int
+  hasIncome        Boolean          @default(false)
+  startCapital     Float
+  currentCapital   Float
+  profitPercentage Float            @default(0)
+  capitalization   Float            @default(0)
+  status           InvestmentStatus @default(ACTIVE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relationships
+  userProject  UserProject   @relation(fields: [userProjectId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  dividends    Dividend[]
+
+  @@map("investments")
+}
+
+model Dividend {
+  id           Int           @id @default(autoincrement())
+  investmentId Int
+  userId       Int
+  amount       Float
+  status       DividendStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relationships
+  investment Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dividends")
+}
+
+model Transaction {
+  id                 Int             @id @default(autoincrement())
+  type               TransactionType
+  amount             Float
+  paymentMethod      String?
+  balanceBefore      Float
+  balanceAfter       Float
+  relatedEntityType  String?         // Тип пов'язаної сутності (Investment, Dividend, etc.)
+  relatedEntityId    Int?            // ID пов'язаної сутності
+  userId             Int
+  investmentId       Int?            // Опціональний зв'язок з інвестицією
+  createdAt          DateTime        @default(now())
+
+  // Relationships
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  investment Investment? @relation(fields: [investmentId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
+
+model MarketingCard {
+  id        Int      @id @default(autoincrement())
+  projectId Int      @unique
+  title     String
+  content   String?
+  imageUrls String[] // Array of image URLs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("marketing_cards")
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  slug      String   // Наприклад: "user-123-read", "investment-456-edit"
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
+  @@map("permissions")
+}
