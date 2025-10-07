@@ -1,0 +1,243 @@
+{
+    "info": {
+        "name": "Project Backend - Auth API",
+        "description": "API тестування для аутентифікації",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "🏠 Test Server",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "📝 Register User",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Зберігаємо користувача для наступних тестів",
+                            "if (pm.response.code === 201) {",
+                            "    const responseJson = pm.response.json();",
+                            "    pm.globals.set('user_id', responseJson.user.id);",
+                            "    pm.globals.set('user_email', responseJson.user.email);",
+                            "    console.log('✅ Користувач створений:', responseJson.user.email);",
+                            "} else {",
+                            "    console.log('❌ Помилка реєстрації');",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"yaroslav@example.com\",\n  \"password\": \"MyPass123!\",\n  \"name\": \"Ярослав\",\n  \"surname\": \"Кабай\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "register"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "🔑 Login User",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Зберігаємо JWT токен автоматично",
+                            "if (pm.response.code === 200) {",
+                            "    const responseJson = pm.response.json();",
+                            "    pm.globals.set('access_token', responseJson.access_token);",
+                            "    pm.collectionVariables.set('access_token', responseJson.access_token);",
+                            "    console.log('✅ Логін успішний, токен збережено');",
+                            "    console.log('🎫 Токен:', responseJson.access_token.substring(0, 50) + '...');",
+                            "} else {",
+                            "    console.log('❌ Помилка логіну');",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"yaroslav@example.com\",\n  \"password\": \"MyPass123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "❌ Test Register - Duplicate Email",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"yaroslav@example.com\",\n  \"password\": \"AnotherPass123!\",\n  \"name\": \"Дублікат\",\n  \"surname\": \"Користувач\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "register"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "❌ Test Login - Wrong Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"yaroslav@example.com\",\n  \"password\": \"WrongPassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "❌ Test Validation - Invalid Email",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"MyPass123!\",\n  \"name\": \"Тест\",\n  \"surname\": \"Валідації\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "register"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "❌ Test Validation - Weak Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"weak@example.com\",\n  \"password\": \"123\",\n  \"name\": \"Слабкий\",\n  \"surname\": \"Пароль\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "register"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}
