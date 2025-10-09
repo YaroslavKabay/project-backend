@@ -8,12 +8,3 @@ export const jwtConfig: JwtModuleOptions = {
     audience: 'project-frontend', // Для кого призначений токен
   },
 };
-
-// Тип для JWT payload (що зберігається в токені)
-export interface JwtPayload {
-  sub: number; // User ID (standard JWT field)
-  email: string; // User email
-  role: 'ADMIN' | 'USER' | 'MANAGER'; // User role from our enum
-  iat?: number; // Issued at (коли видано) - автоматично додається
-  exp?: number; // Expires at (коли закінчується) - автоматично додається
-}

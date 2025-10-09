@@ -4,11 +4,18 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
+  UseGuards,
+  Request,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type {
+  AuthenticatedRequest,
+  AuthenticatedUser,
+} from './types/auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -26,27 +33,42 @@ export class AuthController {
   }
 
   /**
-   * ЛОГІН КОРИСТУВАЧА
+   * 🚪 ЛОГІН КОРИСТУВАЧА (PASSPORT VERSION)
    * POST /auth/login
    * Body: { email, password }
    *
-   * ПОКИ БЕЗ PASSPORT GUARD - додамо пізніше
-   * Зараз робимо простий варіант для тестування
+   * Passport автоматично:
+   * 1. Витягує email/password з req.body
+   * 2. Викликає LocalStrategy.validate()
+   * 3. Якщо OK → req.user = user
+   * 4. Якщо помилка → 401 Unauthorized
    */
+
+  @UseGuards(LocalAuthGuard) // 🛡️ Passport Guard
   @Post('login')
-  @HttpCode(HttpStatus.OK) // 200 OK
-  async login(@Body() loginDto: LoginDto) {
-    const { email, password } = loginDto;
+  @HttpCode(HttpStatus.OK)
+  login(@Request() req: AuthenticatedRequest) {
+    // req.user УЖЕ перевірений LocalStrategy!
+    return this.authService.login(req.user);
+  }
 
-    // 1. ВАЛІДУЄМО КОРИСТУВАЧА
-    const user = await this.authService.validateUser(email, password);
+  /**
+   * 🎫 ЗАХИЩЕНИЙ РОУТ - ПРОФІЛЬ КОРИСТУВАЧА
+   * GET /auth/profile
+   * Headers: Authorization: Bearer <jwt_token>
+   *
+   * Passport автоматично:
+   * 1. Витягує JWT токен з Authorization header
+   * 2. Викликає JwtStrategy.validate()
+   * 3. Завантажує користувача з БД
+   * 4. Якщо OK → req.user = user
+   * 5. Якщо помилка → 401 Unauthorized
+   */
 
-    if (!user) {
-      // Повертаємо загальну помилку (не розкриваємо чи email існує)
-      throw new UnauthorizedException('Невірний email або пароль');
-    }
-
-    // 2. ГЕНЕРУЄМО JWT ТОКЕН
-    return this.authService.login(user);
+  @UseGuards(JwtAuthGuard) // 🛡️ JWT Guard
+  @Get('profile')
+  getProfile(@Request() req: AuthenticatedRequest): AuthenticatedUser {
+    // req.user УЖЕ завантажений з БД через JwtStrategy!
+    return req.user;
   }
 }

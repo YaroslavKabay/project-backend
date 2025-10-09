@@ -3,20 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
-import { JwtPayload } from '../../config/jwt.config';
-
-// Тип користувача без паролю (для безпеки)
-type UserWithoutPassword = {
-  id: number;
-  email: string;
-  name: string;
-  surname: string;
-  role: 'ADMIN' | 'USER' | 'MANAGER';
-  balance: number;
-  phone?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { AuthenticatedUser, JwtPayload } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -85,7 +72,7 @@ export class AuthService {
   async validateUser(
     email: string,
     password: string,
-  ): Promise<UserWithoutPassword | null> {
+  ): Promise<AuthenticatedUser | null> {
     // 1. ЗНАХОДИМО КОРИСТУВАЧА ПО EMAIL
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -115,7 +102,7 @@ export class AuthService {
    * 3. Генерує access token
    * 4. Повертає токен + дані користувача
    */
-  login(user: UserWithoutPassword) {
+  login(user: AuthenticatedUser) {
     // 1. СТВОРЮЄМО JWT PAYLOAD
     const payload: JwtPayload = {
       sub: user.id, // User ID (стандартне поле JWT)

@@ -10,7 +10,9 @@ import {
 import { Transform } from 'class-transformer';
 
 export class RegisterDto {
-  @Transform(({ value }) => value?.toLowerCase().trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.toLowerCase().trim() : value,
+  )
   @IsNotEmpty({ message: 'Email не може бути пустим' })
   @IsEmail({}, { message: 'Будь ласка, введіть валідний email' })
   email: string;
@@ -33,7 +35,9 @@ export class RegisterDto {
   @MaxLength(50, { message: 'Пароль не може бути довшим 50 символів' })
   password: string;
 
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsNotEmpty({ message: "Ім'я не може бути пустим" })
   @IsString({ message: "Ім'я повинно бути текстом" })
   @MinLength(2, { message: "Ім'я повинно містити мінімум 2 символи" })
@@ -43,7 +47,9 @@ export class RegisterDto {
   })
   name: string;
 
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsNotEmpty({ message: 'Прізвище не може бути пустим' })
   @IsString({ message: 'Прізвище повинно бути текстом' })
   @MinLength(2, { message: 'Прізвище повинно містити мінімум 2 символи' })
