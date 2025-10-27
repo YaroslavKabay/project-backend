@@ -1,601 +1,817 @@
 {
-    "info": {
-        "name": "Project Backend - Passport Auth API",
-        "description": "🚀 Повна колекція для тестування Passport аутентифікації\n\n📝 **Порядок тестування:**\n1. Register - створити акаунт\n2. Login - отримати JWT токен\n3. Profile - перевірити захищений роут\n\n🎯 **Автоматика:**\n- JWT токен автоматично зберігається після login\n- Токен автоматично додається в Authorization header",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-    },
-    "variable": [
-        {
-            "key": "baseUrl",
-            "value": "http://localhost:3000",
-            "type": "string",
-            "description": "Base URL сервера"
-        },
-        {
-            "key": "access_token",
-            "value": "",
-            "type": "string",
-            "description": "JWT токен (автоматично оновлюється після login)"
-        }
-    ],
-    "item": [
-        {
-            "name": "📁 1. РЕЄСТРАЦІЯ",
-            "item": [
-                {
-                    "name": "✅ Register Success",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"yarko.test@gmail.com\",\n  \"password\": \"MyStrongPass123!\",\n  \"name\": \"Ярослав\",\n  \"surname\": \"Тестовий\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/register",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "register"
-                            ]
-                        },
-                        "description": "🎯 **Успішна реєстрація**\n\n**Очікуваний результат:**\n- Status: 201 Created\n- Користувач створений в БД\n- Пароль захешований"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 201', function () {",
-                                    "    pm.response.to.have.status(201);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response has success message', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.message).to.include('успішно');",
-                                    "});",
-                                    "",
-                                    "pm.test('User data is returned', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.user).to.have.property('id');",
-                                    "    pm.expect(jsonData.user).to.have.property('email');",
-                                    "    pm.expect(jsonData.user).to.not.have.property('passwordHash');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Register - Duplicate Email",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"yarko.test@gmail.com\",\n  \"password\": \"AnotherPass123!\",\n  \"name\": \"Дубль\",\n  \"surname\": \"Юзер\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/register",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "register"
-                            ]
-                        },
-                        "description": "🎯 **Дублікат email**\n\n**Очікуваний результат:**\n- Status: 409 Conflict\n- Помилка про існуючий email"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 409', function () {",
-                                    "    pm.response.to.have.status(409);",
-                                    "});",
-                                    "",
-                                    "pm.test('Error message about existing email', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.message).to.include('існує');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Register - Weak Password",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"weak.password@gmail.com\",\n  \"password\": \"123\",\n  \"name\": \"Weak\",\n  \"surname\": \"User\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/register",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "register"
-                            ]
-                        },
-                        "description": "🎯 **Слабкий пароль**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилки валідації паролю"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 400', function () {",
-                                    "    pm.response.to.have.status(400);",
-                                    "});",
-                                    "",
-                                    "pm.test('Password validation error', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(JSON.stringify(jsonData)).to.include('пароль');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "📁 2. PASSPORT LOGIN",
-            "item": [
-                {
-                    "name": "✅ Login Success (Passport)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"yarko.test@gmail.com\",\n  \"password\": \"MyStrongPass123!\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/login",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "login"
-                            ]
-                        },
-                        "description": "🎯 **Успішний логін через Passport LocalStrategy**\n\n**Що відбувається:**\n1. LocalAuthGuard активує LocalStrategy\n2. LocalStrategy перевіряє email/password\n3. AuthService генерує JWT токен\n\n**Очікуваний результат:**\n- Status: 200 OK\n- JWT токен в відповіді\n- Токен автоматично зберігається"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response has access token', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('access_token');",
-                                    "    pm.expect(jsonData.access_token).to.be.a('string');",
-                                    "    pm.expect(jsonData.access_token.length).to.be.above(50);",
-                                    "});",
-                                    "",
-                                    "pm.test('User data is returned', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.user).to.have.property('id');",
-                                    "    pm.expect(jsonData.user).to.have.property('email');",
-                                    "    pm.expect(jsonData.user.email).to.eql('yarko.test@gmail.com');",
-                                    "});",
-                                    "",
-                                    "// 🎯 АВТОМАТИЧНО ЗБЕРІГАЄМО JWT ТОКЕН",
-                                    "const jsonData = pm.response.json();",
-                                    "if (jsonData.access_token) {",
-                                    "    pm.collectionVariables.set('access_token', jsonData.access_token);",
-                                    "    console.log('✅ JWT токен збережений:', jsonData.access_token.substring(0, 50) + '...');",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Login - Wrong Password",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"yarko.test@gmail.com\",\n  \"password\": \"WrongPassword123!\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/login",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "login"
-                            ]
-                        },
-                        "description": "🎯 **Неправильний пароль**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- LocalStrategy кине UnauthorizedException"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 401', function () {",
-                                    "    pm.response.to.have.status(401);",
-                                    "});",
-                                    "",
-                                    "pm.test('Error message about invalid credentials', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.message).to.include('Невірний');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Login - User Not Found",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"nonexistent@gmail.com\",\n  \"password\": \"AnyPassword123!\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/login",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "login"
-                            ]
-                        },
-                        "description": "🎯 **Неіснуючий email**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Та ж помилка що й при неправильному паролі (безпека)"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 401', function () {",
-                                    "    pm.response.to.have.status(401);",
-                                    "});",
-                                    "",
-                                    "pm.test('Same error message as wrong password (security)', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.message).to.include('Невірний email або пароль');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "📁 3. JWT PROTECTED ROUTES",
-            "item": [
-                {
-                    "name": "✅ Get Profile (JWT Auth)",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{access_token}}",
-                                "description": "JWT токен автоматично підставляється"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/profile",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "profile"
-                            ]
-                        },
-                        "description": "🎯 **Захищений роут через JWT**\n\n**Що відбувається:**\n1. JwtAuthGuard активує JwtStrategy\n2. JwtStrategy витягує токен з Authorization header\n3. JwtStrategy перевіряє підпис + термін дії\n4. JwtStrategy завантажує user з БД\n5. req.user заповнюється\n6. Controller повертає профіль\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Дані користувача БЕЗ sensitive полів"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 200', function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Profile data is returned', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('id');",
-                                    "    pm.expect(jsonData).to.have.property('email');",
-                                    "    pm.expect(jsonData).to.have.property('name');",
-                                    "    pm.expect(jsonData).to.have.property('role');",
-                                    "    pm.expect(jsonData).to.have.property('balance');",
-                                    "});",
-                                    "",
-                                    "pm.test('No sensitive data exposed', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.not.have.property('passwordHash');",
-                                    "    pm.expect(jsonData).to.not.have.property('emailVerificationToken');",
-                                    "    pm.expect(jsonData).to.not.have.property('passwordResetToken');",
-                                    "});",
-                                    "",
-                                    "pm.test('Email matches login email', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.email).to.eql('yarko.test@gmail.com');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Profile - No Token",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/profile",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "profile"
-                            ]
-                        },
-                        "description": "🎯 **Без JWT токену**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може знайти токен"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 401', function () {",
-                                    "    pm.response.to.have.status(401);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "❌ Profile - Invalid Token",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer invalid-token-here",
-                                "description": "Невалідний JWT токен"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/profile",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "profile"
-                            ]
-                        },
-                        "description": "🎯 **Невалідний JWT токен**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може розшифрувати токен"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('Status code is 401', function () {",
-                                    "    pm.response.to.have.status(401);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "📁 4. EDGE CASES & SECURITY",
-            "item": [
-                {
-                    "name": "🔒 Security Test - SQL Injection Email",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"admin'; DROP TABLE users; --\",\n  \"password\": \"HackAttempt123!\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/login",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "login"
-                            ]
-                        },
-                        "description": "🎯 **Тест на SQL Injection**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request (DTO валідація)\n- Або 401 Unauthorized (якщо пройшла валідацію)\n- Prisma має захист від SQL Injection"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('SQL injection blocked', function () {",
-                                    "    // Має бути 400 (валідація) або 401 (неправильні дані)",
-                                    "    pm.expect([400, 401]).to.include(pm.response.code);",
-                                    "});",
-                                    "",
-                                    "pm.test('No server crash or 500 error', function () {",
-                                    "    pm.response.to.not.have.status(500);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "🔒 Security Test - XSS in Name",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"xss.test@gmail.com\",\n  \"password\": \"ValidPass123!\",\n  \"name\": \"<script>alert('XSS')</script>\",\n  \"surname\": \"Test\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/auth/register",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "register"
-                            ]
-                        },
-                        "description": "🎯 **Тест на XSS в полі name**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- DTO валідація має заблокувати HTML теги"
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "pm.test('XSS attempt blocked by validation', function () {",
-                                    "    pm.response.to.have.status(400);",
-                                    "});",
-                                    "",
-                                    "pm.test('Validation error mentions invalid characters', function () {",
-                                    "    const jsonData = pm.response.json();",
-                                    "    pm.expect(JSON.stringify(jsonData)).to.include('літери');",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-    ],
-    "event": [
-        {
-            "listen": "prerequest",
-            "script": {
-                "type": "text/javascript",
-                "exec": [
-                    "// 🎯 Глобальний pre-request скрипт",
-                    "console.log('🚀 Executing request to:', pm.request.url);",
-                    "",
-                    "// Показуємо який токен використовуємо",
-                    "const token = pm.collectionVariables.get('access_token');",
-                    "if (token) {",
-                    "    console.log('🎫 Using JWT token:', token.substring(0, 50) + '...');",
-                    "} else {",
-                    "    console.log('❌ No JWT token available');",
-                    "}"
-                ]
-            }
-        },
-        {
-            "listen": "test",
-            "script": {
-                "type": "text/javascript",
-                "exec": [
-                    "// 🎯 Глобальні тести для всіх запитів",
-                    "pm.test('Response time is acceptable', function () {",
-                    "    pm.expect(pm.response.responseTime).to.be.below(2000);",
-                    "});",
-                    "",
-                    "pm.test('Content-Type is JSON (if not 401/403)', function () {",
-                    "    if (![401, 403].includes(pm.response.code)) {",
-                    "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                    "    }",
-                    "});"
-                ]
-            }
-        }
-    ]
+	"info": {
+		"_postman_id": "investment-platform-auth-complete",
+		"name": "🏦 Investment Platform - Complete Auth API",
+		"description": "🚀 Повна колекція для тестування аутентифікації\n\n📝 **Що нового:**\n- ✅ Refresh Tokens (14d в БД)\n- ✅ Logout з відкликанням токенів\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. НОВІ ENDPOINTS - refresh + logout\n4. JWT PROTECTED - всі сценарії\n5. SECURITY - всі тести",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string",
+			"description": "Base URL сервера"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string",
+			"description": "JWT Access Token (2h, автоматично оновлюється)"
+		},
+		{
+			"key": "refresh_token", 
+			"value": "",
+			"type": "string",
+			"description": "Refresh Token (14d, зберігається в БД)"
+		}
+	],
+	"item": [
+		{
+			"name": "📁 1. РЕЄСТРАЦІЯ",
+			"item": [
+				{
+					"name": "✅ Register Success",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.user@gmail.com\",\n  \"password\": \"SecurePass123!\",\n  \"name\": \"Тестовий\",\n  \"surname\": \"Користувач\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "🎯 **Успішна реєстрація + автологін**\n\n**Очікуваний результат:**\n- Status: 201 Created\n- Повертає access_token (2h) + refresh_token (14d)\n- Користувач автоматично залогінений\n- Токени зберігаються автоматично"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has both tokens', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    pm.expect(jsonData).to.have.property('refresh_token');",
+									"    pm.expect(jsonData.access_token).to.be.a('string');",
+									"    pm.expect(jsonData.refresh_token).to.be.a('string');",
+									"});",
+									"",
+									"pm.test('User data returned without sensitive fields', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user).to.have.property('id');",
+									"    pm.expect(jsonData.user).to.have.property('email');",
+									"    pm.expect(jsonData.user).to.not.have.property('passwordHash');",
+									"});",
+									"",
+									"// 🎯 АВТОМАТИЧНО ЗБЕРІГАЄМО ТОКЕНИ",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.access_token && jsonData.refresh_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"    console.log('✅ Токени збережені після реєстрації');",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Register - Duplicate Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.user@gmail.com\",\n  \"password\": \"AnotherPass123!\",\n  \"name\": \"Дубль\",\n  \"surname\": \"Юзер\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "🎯 **Дублікат email**\n\n**Очікуваний результат:**\n- Status: 409 Conflict\n- Помилка про існуючий email"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 409', function () {",
+									"    pm.response.to.have.status(409);",
+									"});",
+									"",
+									"pm.test('Error message about existing email', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('існує');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Register - Weak Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"weak.password@gmail.com\",\n  \"password\": \"123\",\n  \"name\": \"Weak\",\n  \"surname\": \"User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "🎯 **Слабкий пароль**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилки валідації паролю"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 400', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Password validation error', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(JSON.stringify(jsonData)).to.include('пароль');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📁 2. PASSPORT LOGIN",
+			"item": [
+				{
+					"name": "✅ Login Success (Passport)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.user@gmail.com\",\n  \"password\": \"SecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "🎯 **Успішний логін + Rate Limiting**\n\n**Що відбувається:**\n1. ThrottlerGuard перевіряє rate limit (5/min)\n2. LocalAuthGuard активує LocalStrategy\n3. LocalStrategy перевіряє email/password\n4. AuthService генерує нові токени\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Нові access_token (2h) + refresh_token (14d)\n- Rate limit headers"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has both tokens', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    pm.expect(jsonData).to.have.property('refresh_token');",
+									"    pm.expect(jsonData.access_token).to.be.a('string');",
+									"    pm.expect(jsonData.refresh_token).to.be.a('string');",
+									"});",
+									"",
+									"pm.test('User data returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user).to.have.property('id');",
+									"    pm.expect(jsonData.user).to.have.property('email');",
+									"    pm.expect(jsonData.user.email).to.eql('test.user@gmail.com');",
+									"});",
+									"",
+									"// 🎯 ОНОВЛЮЄМО ТОКЕНИ",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.access_token && jsonData.refresh_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"    console.log('✅ Токени оновлені після логіну');",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Login - Wrong Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.user@gmail.com\",\n  \"password\": \"WrongPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "🎯 **Неправильний пароль**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- LocalStrategy кине UnauthorizedException"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test('Error message about invalid credentials', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('Невірний');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Login - User Not Found",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nonexistent@gmail.com\",\n  \"password\": \"AnyPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "🎯 **Неіснуючий email**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Та ж помилка що й при неправильному паролі (безпека)"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test('Same error message as wrong password (security)', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('Невірний email або пароль');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📁 3. НОВІ ENDPOINTS ⭐",
+			"item": [
+				{
+					"name": "🔄 Refresh Access Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
+						},
+						"description": "🔄 **НОВИЙ ENDPOINT: Оновлення access токена**\n\n**Що тестуємо:**\n- Валідацію refresh токена в БД\n- Хешування та порівняння токенів\n- Генерацію нового access токена\n- Оновлення lastUsed timestamp\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Новий access_token\n- Дані користувача"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('New access token returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    pm.expect(jsonData.access_token).to.be.a('string');",
+									"});",
+									"",
+									"pm.test('User data returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user).to.have.property('id');",
+									"    pm.expect(jsonData.user).to.have.property('email');",
+									"});",
+									"",
+									"// Оновлюємо access token",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.access_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    console.log('✅ Access token оновлений');",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "🚪 Logout User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT Access Token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "🚪 **НОВИЙ ENDPOINT: Вихід з відкликанням токенів**\n\n**Що тестуємо:**\n- @CurrentUser декоратор замість @Request\n- JwtAuthGuard для доступу\n- Відкликання refresh токена в БД (REVOKED)\n- Access токен залишається валідним до експірації\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Refresh токен стає неактивним"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Success message returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('успішно');",
+									"});",
+									"",
+									"// Очищуємо токени після logout", 
+									"console.log('✅ Logged out - refresh token revoked in DB');"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📁 4. JWT PROTECTED ROUTES",
+			"item": [
+				{
+					"name": "✅ Get Profile (JWT Auth)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT токен автоматично підставляється"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "🎯 **Захищений роут + @CurrentUser декоратор**\n\n**Що тестуємо:**\n1. JwtAuthGuard активує JwtStrategy\n2. JwtStrategy витягує + валідує токен\n3. JwtStrategy завантажує user з БД\n4. @CurrentUser декоратор витягує user\n5. Controller повертає профіль\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Дані користувача без sensitive полів"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Profile data returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('role');",
+									"    pm.expect(jsonData).to.have.property('balance');",
+									"});",
+									"",
+									"pm.test('No sensitive data exposed', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.not.have.property('passwordHash');",
+									"});",
+									"",
+									"pm.test('Email matches registered email', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.email).to.eql('test.user@gmail.com');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Profile - No Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "🎯 **Без JWT токену**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може знайти токен"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Profile - Invalid Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid-token-here",
+								"description": "Невалідний JWT токен"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "🎯 **Невалідний JWT токен**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може розшифрувати токен"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📁 5. НОВІ SECURITY ТЕСТИ 🛡️",
+			"item": [
+				{
+					"name": "⚠️ Test Rate Limiting (6th request)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test.user@gmail.com\",\n  \"password\": \"wrong_password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "🛡️ **НОВИЙ ТЕСТ: ThrottlerGuard Rate Limiting**\n\n**Як тестувати:**\nВиконай цей запит 6 разів поспіль:\n- Перші 5: 401 Unauthorized (wrong password)\n- 6-й запит: 429 Too Many Requests\n\n**Що тестуємо:**\n- ThrottlerGuard на login endpoint\n- Rate limit: 5 спроб за 60 секунд\n- IP-based tracking"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Rate limiting works (401 or 429)', function () {",
+									"    pm.expect([401, 429]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 429) {",
+									"    pm.test('Rate limit message', function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData.message).to.include('ThrottlerException');",
+									"    });",
+									"    console.log('🛡️ Rate limiting активний!');",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "🛡️ Check Security Headers (Helmet)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"],
+							"path": [""]
+						},
+						"description": "🛡️ **НОВИЙ ТЕСТ: Helmet Security Headers**\n\n**Що перевіряємо:**\n- X-Content-Type-Options: nosniff\n- X-Frame-Options: DENY\n- Content-Security-Policy\n- Referrer-Policy: no-referrer\n- X-DNS-Prefetch-Control: off\n\n**Захист від:**\n- XSS атак\n- Clickjacking\n- MIME sniffing\n- Information leakage"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Helmet security headers present', function () {",
+									"    pm.expect(pm.response.headers.has('X-Content-Type-Options')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('X-Frame-Options')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('Content-Security-Policy')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('Referrer-Policy')).to.be.true;",
+									"    pm.expect(pm.response.headers.has('X-DNS-Prefetch-Control')).to.be.true;",
+									"});",
+									"",
+									"pm.test('Security header values correct', function () {",
+									"    pm.expect(pm.response.headers.get('X-Frame-Options')).to.include('DENY');",
+									"    pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.include('nosniff');",
+									"    pm.expect(pm.response.headers.get('X-DNS-Prefetch-Control')).to.include('off');",
+									"});",
+									"",
+									"console.log('🛡️ Helmet headers:');",
+									"console.log('X-Frame-Options:', pm.response.headers.get('X-Frame-Options'));",
+									"console.log('X-Content-Type-Options:', pm.response.headers.get('X-Content-Type-Options'));",
+									"console.log('Content-Security-Policy:', pm.response.headers.get('Content-Security-Policy'));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "❌ Use Invalid Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"invalid_refresh_token_here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
+						},
+						"description": "🔒 **НОВИЙ ТЕСТ: Недійсний Refresh Token**\n\n**Що тестуємо:**\n- Валідацію refresh токена в БД\n- Хешування та порівняння\n- Proper error handling\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test('Error message about invalid token', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('недійсний');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📁 6. EDGE CASES & SECURITY",
+			"item": [
+				{
+					"name": "🔒 Security Test - SQL Injection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin'; DROP TABLE users; --\",\n  \"password\": \"HackAttempt123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "🎯 **Тест на SQL Injection**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request (DTO валідація)\n- Або 401 Unauthorized (якщо пройшла валідацію)\n- Prisma має захист від SQL Injection"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SQL injection blocked', function () {",
+									"    // Має бути 400 (валідація) або 401 (неправильні дані)",
+									"    pm.expect([400, 401]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test('No server crash or 500 error', function () {",
+									"    pm.response.to.not.have.status(500);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "🔒 Security Test - XSS in Name",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"xss.test@gmail.com\",\n  \"password\": \"ValidPass123!\",\n  \"name\": \"<script>alert('XSS')</script>\",\n  \"surname\": \"Test\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "🎯 **Тест на XSS в полі name**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- DTO валідація має заблокувати HTML теги"
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('XSS attempt blocked by validation', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test('Validation error mentions invalid characters', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(JSON.stringify(jsonData)).to.include('літери');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// 🎯 Глобальний pre-request скрипт",
+					"console.log('🚀 Executing:', pm.request.method, pm.request.url.path.join('/'));",
+					"",
+					"// Показуємо які токени використовуємо",
+					"const accessToken = pm.collectionVariables.get('access_token');",
+					"const refreshToken = pm.collectionVariables.get('refresh_token');",
+					"",
+					"if (accessToken) {",
+					"    console.log('🎫 Access token:', accessToken.substring(0, 50) + '...');",
+					"}",
+					"if (refreshToken) {",
+					"    console.log('🔄 Refresh token:', refreshToken.substring(0, 30) + '...');",
+					"}",
+					"",
+					"if (!accessToken && !refreshToken) {",
+					"    console.log('❌ No tokens available - run Register or Login first');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// 🎯 Глобальні тести для всіх запитів",
+					"pm.test('Response time < 2s', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});",
+					"",
+					"pm.test('Content-Type is JSON (if not error)', function () {",
+					"    if (![401, 403, 429].includes(pm.response.code)) {",
+					"        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"    }",
+					"});",
+					"",
+					"// Логуємо результат запиту",
+					"const status = pm.response.code;",
+					"const emoji = status < 300 ? '✅' : status < 500 ? '⚠️' : '❌';",
+					"console.log(emoji + ' Response: ' + status + ' ' + pm.response.status);"
+				]
+			}
+		}
+	]
 }

@@ -41,6 +41,12 @@ enum UserRole {
   MANAGER // обмежений доступ до управління проєктами
 }
 
+enum RefreshTokenStatus {
+  ACTIVE   // активний токен
+  REVOKED  // відкликаний (logout, підозрілість)
+  EXPIRED  // прострочений
+}
+
 // ===== MODELS =====
 
 model User {
@@ -56,10 +62,11 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relationships
-  userProjects UserProject[]
-  permissions  Permission[]
-  transactions Transaction[]
-  dividends    Dividend[]
+  userProjects  UserProject[]
+  permissions   Permission[]
+  transactions  Transaction[]
+  dividends     Dividend[]
+  refreshTokens RefreshToken[] // Refresh токени користувача
 
   @@map("users")
 }
@@ -186,4 +193,24 @@ model Permission {
 
   @@unique([userId, slug])
   @@map("permissions")
+}
+
+model RefreshToken {
+  id        Int                @id @default(autoincrement())
+  token     String             @unique // Хеш refresh токену (безпека)
+  userId    Int
+  status    RefreshTokenStatus @default(ACTIVE)
+  expiresAt DateTime           // Коли токен стане недійсним (14 днів)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  
+  // Metadata для моніторингу  
+  userAgent String?  // Браузер/додаток
+  ipAddress String?  // IP адреса
+  lastUsed  DateTime @default(now()) // Коли останній раз використовували
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }

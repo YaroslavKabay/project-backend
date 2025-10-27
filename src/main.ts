@@ -1,9 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // 🛡️ HELMET - Security Headers (захист від XSS, clickjacking, MIME sniffing)
+  app.use(helmet());
+
+  // 🌍 CORS - дозволяє фронтенду робити запити з браузера
+  app.enableCors({
+    origin: [
+      'http://localhost:3000', // Next.js dev server
+      'http://localhost:3001', // Next.js альтернативний порт (якщо 3000 зайнятий)
+      // TODO: Додати продакшн домен коли буде готовий
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true, // Дозволити cookies та Authorization headers
+  });
 
   // 🛡️ ГЛОБАЛЬНА ВАЛІДАЦІЯ - перевіряє всі DTO автоматично
   app.useGlobalPipes(

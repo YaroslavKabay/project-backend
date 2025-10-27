@@ -21,13 +21,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // 🔍 Звідки брати токен
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization: Bearer <token>
       ignoreExpiration: false, // Перевіряємо термін дії
-      secretOrKey: process.env.JWT_SECRET || 'dev-fallback-secret-key', // Секрет для валідації підпису
+      secretOrKey: process.env.JWT_SECRET!, // Секрет для валідації підпису (гарантовано існує через env validation)
     });
   }
 
   /**
-   * 🔍 ВАЛІДАЦІЯ JWT PAYLOAD
+   * 🔍 ВАЛІДАЦІЯ JWT PAYLOAD (СТАНДАРТНИЙ ПІДХІД)
    * Викликається ПІСЛЯ успішної перевірки підпису токену
+   * Перевіряє тільки чи користувач існує в БД
    */
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     // 🔍 Перевіряємо чи користувач ще існує в БД
