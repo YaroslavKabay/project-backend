@@ -62,11 +62,12 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relationships
-  userProjects  UserProject[]
-  permissions   Permission[]
-  transactions  Transaction[]
-  dividends     Dividend[]
-  refreshTokens RefreshToken[] // Refresh токени користувача
+  userProjects         UserProject[]
+  permissions          Permission[]
+  transactions         Transaction[]
+  dividends            Dividend[]
+  refreshTokens        RefreshToken[] // Refresh токени користувача
+  passwordResetTokens  PasswordResetToken[] // Токени для відновлення паролю
 
   @@map("users")
 }
@@ -213,4 +214,18 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())    // Унікальний ID
+  token     String   @unique                 // Reset токен (UUID)
+  userId    Int                              // FK до користувача  
+  expiresAt DateTime                         // Час закінчення (15 хвилин)
+  used      Boolean  @default(false)         // Чи використаний токен
+  createdAt DateTime @default(now())         // Коли створений
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }

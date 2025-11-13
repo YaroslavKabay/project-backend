@@ -3,13 +3,13 @@ import {
   IsString,
   MinLength,
   MaxLength,
-  IsStrongPassword,
   IsNotEmpty,
   Matches,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { PasswordValidationMixin } from './password-validation.dto';
 
-export class RegisterDto {
+export class RegisterDto extends PasswordValidationMixin {
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.toLowerCase().trim() : value,
   )
@@ -17,23 +17,8 @@ export class RegisterDto {
   @IsEmail({}, { message: 'Будь ласка, введіть валідний email' })
   email: string;
 
-  @IsString({ message: 'Пароль повинен бути текстом' })
-  @IsNotEmpty({ message: 'Пароль не може бути пустим' })
-  @IsStrongPassword(
-    {
-      minLength: 8,
-      minLowercase: 1, // Хоча б 1 мала літера
-      minUppercase: 1, // Хоча б 1 велика літера
-      minNumbers: 1, // Хоча б 1 цифра
-      minSymbols: 1, // Хоча б 1 спецсимвол
-    },
-    {
-      message:
-        'Пароль повинен містити мінімум 8 символів, велику та малу літери і цифру',
-    },
-  )
-  @MaxLength(50, { message: 'Пароль не може бути довшим 50 символів' })
-  password: string;
+  // 🔐 Валідація паролю наслідується від PasswordValidationMixin
+  // Правила: мін 8, макс 50 символів, велика+мала літера, цифра, спецсимвол
 
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,

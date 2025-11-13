@@ -12,6 +12,9 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -128,6 +131,66 @@ export class AuthController {
     return {
       message: 'Ви успішно вийшли з акаунту',
     };
+  }
+
+  /**
+   * 🔐 ЗМІНА ПАРОЛЮ АВТОРИЗОВАНОГО КОРИСТУВАЧА
+   * POST /auth/change-password
+   * Headers: Authorization: Bearer <jwt_token>
+   * Body: { current_password, new_password }
+   *
+   * Безпека:
+   * - Тільки авторизовані користувачі (JwtAuthGuard)
+   * - Перевірка поточного паролю
+   * - Валідація нового паролю
+   */
+  @UseGuards(JwtAuthGuard) // 🛡️ Тільки авторизовані
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.authService.changePassword(user.id, changePasswordDto);
+  }
+
+  /**
+   * 📧 ЗАПИТ НА ВІДНОВЛЕННЯ ПАРОЛЮ
+   * POST /auth/forgot-password
+   * Body: { email }
+   *
+   * 🛡️ Rate Limiting: 3 спроби на 5 хвилин (захист від spam)
+   * 📧 Email: Відправляє reset link на email
+   * 🛡️ Безпека: Токен НІКОЛИ не повертається в API відповіді
+   * ⚠️ Помилка: Якщо email сервіс не працює - кидає BadRequestException
+   */
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 спроби за 5 хвилин
+  @UseGuards(ThrottlerGuard) // 🛡️ Rate Limiter
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  /**
+   * 🔄 ВІДНОВЛЕННЯ ПАРОЛЮ ЗА ТОКЕНОМ
+   * POST /auth/reset-password
+   * Body: { token, new_password }
+   *
+   * 🔐 Безпека:
+   * - Перевірка валідності токена
+   * - Одноразове використання токена
+   * - 15 хвилин експірація
+   * - Відкликання всіх refresh токенів
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.authService.resetPassword(resetPasswordDto);
   }
 
   /**

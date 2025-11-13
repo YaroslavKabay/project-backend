@@ -2,12 +2,18 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '../email/email.service';
 import { refreshTokenConfig } from '../../config/jwt.config';
 import {
   AuthenticatedUser,
@@ -18,9 +24,12 @@ import {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -43,6 +52,7 @@ export class AuthService {
     });
 
     if (existingUser) {
+      this.logger.warn(`Registration failed: Email already exists - ${email}`);
       throw new ConflictException('Користувач з таким email вже існує');
     }
 
@@ -75,6 +85,8 @@ export class AuthService {
     });
 
     // 4. АВТОМАТИЧНО ЛОГІНИМО НОВОГО КОРИСТУВАЧА
+    this.logger.log(`✅ New user registered and logged in: ${email}`);
+
     const loginResponse = await this.login(
       user as AuthenticatedUser,
       userAgent,
@@ -103,6 +115,7 @@ export class AuthService {
     });
 
     if (!user) {
+      this.logger.warn(`Validation failed: User not found - ${email}`);
       return null; // Користувач не знайдений
     }
 
@@ -110,10 +123,12 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      this.logger.warn(`Validation failed: Invalid password for - ${email}`);
       return null; // Пароль невірний
     }
 
     // 3. ПОВЕРТАЄМО КОРИСТУВАЧА БЕЗ ПАРОЛЮ
+    this.logger.log(`✅ User validation successful: ${email}`);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
@@ -263,6 +278,9 @@ export class AuthService {
     });
 
     if (!refreshTokenRecord) {
+      this.logger.warn(
+        `Refresh token validation failed: Invalid or expired token`,
+      );
       throw new UnauthorizedException(
         'Refresh токен недійсний або прострочений',
       );
@@ -289,6 +307,8 @@ export class AuthService {
     });
 
     const userRecord = refreshTokenRecord.user;
+    this.logger.log(`✅ Access token refreshed for user: ${userRecord.email}`);
+
     return {
       access_token: newAccessToken,
       user: userRecord,
@@ -324,11 +344,215 @@ export class AuthService {
       ipAddress,
     );
 
+    this.logger.log(`✅ User logged in successfully: ${user.email}`);
+
     return {
       message: 'Успішний вхід',
       access_token: accessToken,
       refresh_token: refreshToken,
       user,
+    };
+  }
+
+  /**
+   * 🔐 ЗМІНА ПАРОЛЮ АВТОРИЗОВАНОГО КОРИСТУВАЧА
+   * 1. Знаходить користувача в БД за ID
+   * 2. Перевіряє поточний пароль
+   * 3. Хешує новий пароль
+   * 4. Оновлює пароль в БД
+   */
+  async changePassword(
+    userId: number,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const { current_password, new_password } = changePasswordDto;
+
+    // 1. ЗНАХОДИМО КОРИСТУВАЧА В БД
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      this.logger.error(
+        `Password change failed: User not found with ID ${userId}`,
+      );
+      throw new NotFoundException('Користувач не знайдений');
+    }
+
+    // 2. ПЕРЕВІРЯЄМО ПОТОЧНИЙ ПАРОЛЬ
+    const isCurrentPasswordValid = await bcrypt.compare(
+      current_password,
+      user.passwordHash,
+    );
+
+    if (!isCurrentPasswordValid) {
+      this.logger.warn(
+        `Password change failed: Invalid current password for user ID ${userId}`,
+      );
+      throw new BadRequestException('Поточний пароль невірний');
+    }
+
+    // 3. ПЕРЕВІРЯЄМО ЩО НОВИЙ ПАРОЛЬ ВІДРІЗНЯЄТЬСЯ ВІД ПОТОЧНОГО
+    const isSamePassword = await bcrypt.compare(
+      new_password,
+      user.passwordHash,
+    );
+    if (isSamePassword) {
+      this.logger.warn(
+        `Password change failed: New password same as current for user ID ${userId}`,
+      );
+      throw new BadRequestException(
+        'Новий пароль не може бути таким же як поточний',
+      );
+    }
+
+    // 4. ХЕШУЄМО НОВИЙ ПАРОЛЬ
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(new_password, saltRounds);
+
+    // 5. ОНОВЛЮЄМО ПАРОЛЬ В БД
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashedNewPassword },
+    });
+
+    this.logger.log(`✅ Password changed successfully for user ID: ${userId}`);
+
+    return {
+      message: 'Пароль успішно змінено',
+    };
+  }
+
+  /**
+   * 📧 ВІДПРАВЛЯЄ EMAIL ДЛЯ ВІДНОВЛЕННЯ ПАРОЛЮ
+   * 1. Знаходить користувача по email (безпечно - не розкриває чи існує)
+   * 2. Видаляє старі використані reset токени
+   * 3. Генерує новий унікальний токен (UUID)
+   * 4. Зберігає в БД з експірацією 15 хвилин
+   * 5. Відправляє email з посиланням
+   */
+  async forgotPassword(email: string): Promise<{
+    message: string;
+  }> {
+    // 1. ЗНАХОДИМО КОРИСТУВАЧА ПО EMAIL
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // 🛡️ БЕЗПЕКА: Не розкриваємо чи email існує
+      this.logger.warn(
+        `Forgot password request for non-existent email: ${email}`,
+      );
+      return {
+        message:
+          'Якщо email існує в системі, ми відправили посилання для відновлення',
+      };
+    }
+
+    // 2. ВИДАЛЯЄМО СТАРІ ВИКОРИСТАНІ RESET ТОКЕНИ (cleanup)
+    await this.prisma.passwordResetToken.deleteMany({
+      where: {
+        userId: user.id,
+        used: true,
+      },
+    });
+
+    // 3. ГЕНЕРУЄМО УНІКАЛЬНИЙ RESET ТОКЕН
+    const resetToken = crypto.randomUUID(); // Криптографічно стійкий
+
+    // 4. ОБЧИСЛЮЄМО ДАТУ ЕКСПІРАЦІЇ (15 хвилин)
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    // 5. ЗБЕРІГАЄМО ТОКЕН В БД
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // 6. ВІДПРАВЛЯЄМО EMAIL (якщо можливо)
+    const emailSent = await this.emailService.sendPasswordResetEmail(
+      email,
+      resetToken,
+    );
+
+    if (emailSent) {
+      this.logger.log(`✅ Password reset email sent successfully to: ${email}`);
+      return {
+        message: 'Посилання для відновлення паролю відправлено на ваш email',
+      };
+    } else {
+      // 📧 EMAIL СЕРВІС НЕДОСТУПНИЙ - критична помилка
+      this.logger.error(`Failed to send password reset email to: ${email}`);
+      throw new BadRequestException(
+        'Помилка відправки email. Спробуйте пізніше або зверніться до підтримки.',
+      );
+    }
+  }
+
+  /**
+   * 🔄 ВІДНОВЛЮЄ ПАРОЛЬ ЗА ТОКЕНОМ
+   * 1. Знаходить валідний reset токен в БД
+   * 2. Перевіряє що токен не використаний і не прострочений
+   * 3. Хешує новий пароль
+   * 4. Транзакція: оновлює пароль + позначає токен використаним
+   * 5. Відкликає всі refresh токени (безпека)
+   */
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{
+    message: string;
+  }> {
+    const { token, new_password } = resetPasswordDto;
+
+    // 1. ЗНАХОДИМО ВАЛІДНИЙ RESET ТОКЕН
+    const resetToken = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        token,
+        used: false, // Не використаний
+        expiresAt: { gte: new Date() }, // Не прострочений
+      },
+      include: { user: true },
+    });
+
+    if (!resetToken) {
+      this.logger.warn(
+        `Password reset failed: Invalid or expired token - ${token.substring(0, 8)}...`,
+      );
+      throw new BadRequestException(
+        'Недійсний або прострочений токен відновлення паролю',
+      );
+    }
+
+    // 2. ХЕШУЄМО НОВИЙ ПАРОЛЬ
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(new_password, saltRounds);
+
+    // 3. ТРАНЗАКЦІЯ: ОНОВЛЮЄМО ПАРОЛЬ + ПОЗНАЧАЄМО ТОКЕН ВИКОРИСТАНИМ
+    await this.prisma.$transaction([
+      // Оновлюємо пароль
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash: hashedPassword },
+      }),
+      // Позначаємо токен використаним
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { used: true },
+      }),
+    ]);
+
+    // 4. ВІДКЛИКАЄМО ВСІ REFRESH ТОКЕНИ (безпека після зміни паролю)
+    await this.revokeRefreshToken(resetToken.userId);
+
+    this.logger.log(
+      `✅ Password reset successful for user ID: ${resetToken.userId}`,
+    );
+
+    return {
+      message: 'Пароль успішно відновлено. Увійдіть з новим паролем.',
     };
   }
 }

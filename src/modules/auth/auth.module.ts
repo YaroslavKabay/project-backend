@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { jwtConfig } from '../../config/jwt.config';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -13,6 +14,8 @@ import { jwtConfig } from '../../config/jwt.config';
     PassportModule,
     // JWT MODULE - налаштування токенів
     JwtModule.register(jwtConfig),
+    // EMAIL MODULE - для відправки reset password emails
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [
