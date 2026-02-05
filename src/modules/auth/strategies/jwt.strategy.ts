@@ -1,25 +1,37 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
+import type { Request } from 'express';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { JwtPayload, AuthenticatedUser } from '../types/auth.types';
 
 /**
- * 🎫 JWT STRATEGY - для захищених endpoints
+ * 🍪 JWT STRATEGY - для захищених endpoints з HTTP-only cookies
  *
  * Як працює:
- * 1. Passport автоматично витягує JWT токен з Authorization header
+ * 1. Passport автоматично витягує JWT токен з HTTP-only cookie 'access_token'
  * 2. Перевіряє підпис токену (JWT_SECRET)
  * 3. Якщо токен валідний - викликає validate() з payload
  * 4. Якщо validate повертає user - доступ дозволено
  * 5. User потрапляє в req.user для використання в Controllers
  */
+
+/**
+ * 🍪 CUSTOM JWT EXTRACTOR - витягує токен з HTTP-only cookie
+ */
+const cookieExtractor = (req: Request): string | null => {
+  let token: string | null = null;
+  if (req && req.cookies) {
+    token = (req.cookies['access_token'] as string | undefined) || null;
+  }
+  return token;
+};
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     super({
-      // 🔍 Звідки брати токен
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization: Bearer <token>
+      // 🍪 Звідки брати токен - з HTTP-only cookie
+      jwtFromRequest: cookieExtractor, // access_token cookie
       ignoreExpiration: false, // Перевіряємо термін дії
       secretOrKey: process.env.JWT_SECRET!, // Секрет для валідації підпису (гарантовано існує через env validation)
     });

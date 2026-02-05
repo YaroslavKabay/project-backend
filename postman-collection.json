@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "investment-platform-auth-complete",
 		"name": "🏦 Investment Platform - Complete Auth API",
-		"description": "🚀 Повна колекція для тестування аутентифікації\n\n📝 **Оновлено з логуванням і email тестами:**\n- ✅ Refresh Tokens (14d в БД)\n- ✅ Logout з відкликанням токенів\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Logging для всіх операцій\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
+		"description": "🚀 Повна колекція для тестування аутентифікації з FULL HTTP-only cookies\n\n🔒 **MAXIMUM SECURITY - FULL HTTP-only cookies:**\n- ✅ Access tokens в HTTP-only cookies (максимальний захист від XSS)\n- ✅ Refresh tokens в HTTP-only cookies (захист від XSS)\n- ✅ Автоматичне керування cookies браузером\n- ✅ JWT Strategy читає з cookies замість Authorization headers\n- ✅ Logout з очищенням ОБОХ HTTP-only cookies\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Production logging для всіх операцій\n\n⚠️ **КРИТИЧНО:** Увімкніть 'Send cookies automatically' в Postman settings!\n\n🔐 **АРХІТЕКТУРА:** Same-domain API calls з максимальною безпекою\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії (через cookies)\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -11,18 +11,6 @@
 			"value": "http://localhost:3000",
 			"type": "string",
 			"description": "Base URL сервера"
-		},
-		{
-			"key": "access_token",
-			"value": "",
-			"type": "string",
-			"description": "JWT Access Token (2h, автоматично оновлюється)"
-		},
-		{
-			"key": "refresh_token",
-			"value": "",
-			"type": "string",
-			"description": "Refresh Token (14d, зберігається в БД)"
 		},
 		{
 			"key": "test_email",
@@ -72,12 +60,12 @@
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
-									"pm.test('Response has required fields', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('access_token');",
-									"    pm.expect(jsonData).to.have.property('refresh_token');",
-									"    pm.expect(jsonData).to.have.property('user');",
-									"});",
+								"pm.test('Response has required fields', function () {",
+								"    const jsonData = pm.response.json();",
+								"    pm.expect(jsonData).to.have.property('message');",
+								"    pm.expect(jsonData).to.have.property('user');",
+								"    // ОБА токени тепер в HTTP-only cookies, не в response",
+								"});",
 									"",
 									"pm.test('User data returned', function () {",
 									"    const jsonData = pm.response.json();",
@@ -86,13 +74,12 @@
 									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
 									"});",
 									"",
-									"// 🎯 ОНОВЛЮЄМО ТОКЕНИ",
-									"const jsonData = pm.response.json();",
-									"if (jsonData.access_token && jsonData.refresh_token) {",
-									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
-									"    console.log('✅ Tokens updated automatically');",
-									"}"
+								"// 🍪 ТОКЕНИ ТЕПЕР В HTTP-ONLY COOKIES",
+								"const jsonData = pm.response.json();",
+								"console.log('✅ Користувач успішно увійшов');",
+								"console.log('🍪 Access token встановлено в HTTP-only cookie (2h)');",
+								"console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+								"console.log('👤 User ID:', jsonData.user?.id);"
 								]
 							}
 						}
@@ -232,13 +219,12 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test('Response has both tokens', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('access_token');",
-									"    pm.expect(jsonData).to.have.property('refresh_token');",
-									"    pm.expect(jsonData.access_token).to.be.a('string');",
-									"    pm.expect(jsonData.refresh_token).to.be.a('string');",
-									"});",
+								"pm.test('Response has required fields', function () {",
+								"    const jsonData = pm.response.json();",
+								"    pm.expect(jsonData).to.have.property('message');",
+								"    pm.expect(jsonData).to.have.property('user');",
+								"    // ОБА токени тепер в HTTP-only cookies, не в response",
+								"});",
 									"",
 									"pm.test('User data returned', function () {",
 									"    const jsonData = pm.response.json();",
@@ -247,13 +233,12 @@
 									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
 									"});",
 									"",
-									"// 🎯 ОНОВЛЮЄМО ТОКЕНИ",
-									"const jsonData = pm.response.json();",
-									"if (jsonData.access_token && jsonData.refresh_token) {",
-									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
-									"    console.log('✅ Tokens updated automatically');",
-									"}"
+								"// 🍪 ТОКЕНИ ТЕПЕР В HTTP-ONLY COOKIES",
+								"const jsonData = pm.response.json();",
+								"console.log('✅ Користувач успішно увійшов');",
+								"console.log('🍪 Access token встановлено в HTTP-only cookie (2h)');",
+								"console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+								"console.log('👤 User ID:', jsonData.user?.id);"
 								]
 							}
 						}
@@ -368,7 +353,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+							"raw": "{}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/refresh",
@@ -380,7 +365,7 @@
 								"refresh"
 							]
 						},
-						"description": "🔄 **НОВИЙ ENDPOINT: Оновлення access токена**\n\n**Що тестуємо:**\n- Валідацію refresh токена в БД\n- Хешування та порівняння токенів\n- Генерацію нового access токена\n- Оновлення lastUsed timestamp\n\n**Логи в консолі:**\n- `✅ Access token refreshed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Новий access_token\n- Дані користувача"
+						"description": "🔄 **HTTP-ONLY COOKIES: Оновлення access токена**\n\n**Що тестуємо:**\n- Читання refresh токена з HTTP-only cookie\n- Валідацію refresh токена в БД\n- Встановлення НОВОГО access токена в HTTP-only cookie\n- Response БЕЗ токенів в body (максимальна безпека)\n\n**Логи в консолі:**\n- `✅ Access token refreshed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Response: { message, user } (БЕЗ access_token в body!)\n- Cookie: access_token оновлюється автоматично"
 					},
 					"response": [],
 					"event": [
@@ -393,10 +378,13 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test('New access token returned', function () {",
+									"pm.test('Response contains message (NO tokens in body)', function () {",
 									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('access_token');",
-									"    pm.expect(jsonData.access_token).to.be.a('string');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.be.a('string');",
+									"    // ✅ КРИТИЧНО: НЕ має бути токенів в response body",
+									"    pm.expect(jsonData).to.not.have.property('access_token');",
+									"    pm.expect(jsonData).to.not.have.property('refresh_token');",
 									"});",
 									"",
 									"pm.test('User data returned', function () {",
@@ -405,12 +393,8 @@
 									"    pm.expect(jsonData.user).to.have.property('email');",
 									"});",
 									"",
-									"// Оновлюємо access token",
-									"const jsonData = pm.response.json();",
-									"if (jsonData.access_token) {",
-									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-									"    console.log('✅ Access token оновлений');",
-									"}"
+									"// 🍪 HTTP-only cookies керуються автоматично браузером",
+									"console.log('🔄 Access token оновлено в HTTP-only cookie (автоматично)');"
 								]
 							}
 						}
@@ -433,7 +417,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+							"raw": "{}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/logout",
@@ -1020,7 +1004,7 @@
 					]
 				},
 				{
-					"name": "❌ Use Invalid Refresh Token",
+					"name": "❌ Missing Refresh Token Cookie",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1031,7 +1015,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"invalid_refresh_token_here\"\n}"
+							"raw": "{}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/refresh",
@@ -1043,7 +1027,7 @@
 								"refresh"
 							]
 						},
-						"description": "🔒 **НОВИЙ ТЕСТ: Недійсний Refresh Token**\n\n**Що тестуємо:**\n- Валідацію refresh токена в БД\n- Хешування та порівняння\n- Proper error handling\n\n**Логи в консолі:**\n- `Failed to refresh token: Invalid or expired refresh token`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized"
+						"description": "🔒 **HTTP-ONLY COOKIE ТЕСТ: Відсутній Refresh Token**\n\n**Що тестуємо:**\n- Відсутність HTTP-only cookie\n- Error handling для missing token\n- Security validation\n\n**Логи в консолі:**\n- `Refresh токен не знайдено в cookies`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Error: MISSING_REFRESH_TOKEN"
 					},
 					"response": [],
 					"event": [
@@ -1174,20 +1158,11 @@
 					"// 🎯 Глобальний pre-request скрипт",
 					"console.log('🚀 Executing:', pm.request.method, pm.request.url.path.join('/'));",
 					"",
-					"// Показуємо які токени використовуємо",
-					"const accessToken = pm.collectionVariables.get('access_token');",
-					"const refreshToken = pm.collectionVariables.get('refresh_token');",
-					"",
-					"if (accessToken) {",
-					"    console.log('🎫 Access token:', accessToken.substring(0, 50) + '...');",
-					"}",
-					"if (refreshToken) {",
-					"    console.log('🔄 Refresh token:', refreshToken.substring(0, 30) + '...');",
-					"}",
-					"",
-					"if (!accessToken && !refreshToken) {",
-					"    console.log('❌ No tokens available - run Register or Login first');",
-					"}"
+				"// Інформація про HTTP-only cookies",
+				"console.log('🍪 ОБА токени зберігаються в HTTP-only cookies:');",
+				"console.log('  - access_token: автоматично надсилається з кожним запитом');",
+				"console.log('  - refresh_token: використовується для оновлення access токена');",
+				"console.log('🔒 Токени недоступні JavaScript коду (максимальна безпека)');"
 				]
 			}
 		},

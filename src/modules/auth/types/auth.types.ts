@@ -50,12 +50,22 @@ export interface RefreshTokenPayload {
 }
 
 /**
- * 🎯 LOGIN RESPONSE
- * Відповідь при успішному логіні з двома токенами
+ * 🔧 AUTH SERVICE RESULT (INTERNAL)
+ * Внутрішній результат AuthService з токенами для Controller
  */
-export interface LoginResponse {
+export interface AuthServiceResult {
   message: string;
-  access_token: string; // Короткий токен (2h) - для API запитів
-  refresh_token: string; // Довгий токен (14d) - для оновлення
+  access_token: string; // Для встановлення в HTTP-only cookie
+  refresh_token: string; // Для встановлення в HTTP-only cookie
   user: AuthenticatedUser;
+}
+
+/**
+ * 🔒 LOGIN API RESPONSE (PUBLIC)
+ * Публічний API response з максимальною безпекою (токени в HTTP-only cookies)
+ */
+export interface LoginApiResponse {
+  message: string;
+  user: AuthenticatedUser;
+  // ОБА токени передаються через HTTP-only cookies, не в response body
 }
