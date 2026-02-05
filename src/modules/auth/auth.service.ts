@@ -19,7 +19,7 @@ import {
   AuthenticatedUser,
   JwtPayload,
   RefreshTokenPayload,
-  LoginResponse,
+  AuthServiceResult,
 } from './types/auth.types';
 
 @Injectable()
@@ -32,6 +32,27 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
+  // ================================
+  // 🔧 ПРИВАТНІ UTILITY МЕТОДИ
+  // ================================
+
+  /**
+   * 🔐 ХЕШУЄ ПАРОЛЬ за допомогою bcrypt
+   * Централізована логіка для всіх операцій з паролями
+   */
+  private async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10; // Оптимально для безпеки/швидкості
+    return await bcrypt.hash(password, saltRounds);
+  }
+
+  /**
+   * 🎫 ГЕНЕРУЄ ACCESS TOKEN
+   * Централізована логіка для створення JWT
+   */
+  private generateAccessToken(payload: JwtPayload): string {
+    return this.jwtService.sign(payload);
+  }
+
   /**
    * 🎯 РЕЄСТРАЦІЯ НОВОГО КОРИСТУВАЧА (ОНОВЛЕНО: автологін)
    * 1. Перевіряє чи email вже існує
@@ -43,7 +64,7 @@ export class AuthService {
     registerDto: RegisterDto,
     userAgent?: string,
     ipAddress?: string,
-  ): Promise<LoginResponse> {
+  ): Promise<AuthServiceResult> {
     const { email, password, name, surname } = registerDto;
 
     // 1. ПЕРЕВІРЯЄМО ЧИ EMAIL ВЖЕ ІСНУЄ
@@ -56,9 +77,8 @@ export class AuthService {
       throw new ConflictException('Користувач з таким email вже існує');
     }
 
-    // 2. ХЕШУЄМО ПАРОЛЬ (10 раундів - оптимально для безпеки/швидкості)
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // 2. ХЕШУЄМО ПАРОЛЬ
+    const hashedPassword = await this.hashPassword(password);
 
     // 3. СТВОРЮЄМО КОРИСТУВАЧА В БД
     const user = await this.prisma.user.create({
@@ -297,7 +317,7 @@ export class AuthService {
       role: userRole,
     };
 
-    const newAccessToken = this.jwtService.sign(jwtPayload);
+    const newAccessToken = this.generateAccessToken(jwtPayload);
 
     // 4. ОНОВЛЮЄМО LAST USED ДАТУ
     const recordId = refreshTokenRecord.id;
@@ -326,7 +346,7 @@ export class AuthService {
     user: AuthenticatedUser,
     userAgent?: string,
     ipAddress?: string,
-  ): Promise<LoginResponse> {
+  ): Promise<AuthServiceResult> {
     // 1. СТВОРЮЄМО JWT PAYLOAD для ACCESS TOKEN
     const jwtPayload: JwtPayload = {
       sub: user.id,
@@ -335,7 +355,7 @@ export class AuthService {
     };
 
     // 2. ГЕНЕРУЄМО ACCESS TOKEN (короткий)
-    const accessToken = this.jwtService.sign(jwtPayload);
+    const accessToken = this.generateAccessToken(jwtPayload);
 
     // 3. ГЕНЕРУЄМО та ЗБЕРІГАЄМО REFRESH TOKEN (довгий)
     const refreshToken = await this.generateRefreshToken(
@@ -407,8 +427,7 @@ export class AuthService {
     }
 
     // 4. ХЕШУЄМО НОВИЙ ПАРОЛЬ
-    const saltRounds = 10;
-    const hashedNewPassword = await bcrypt.hash(new_password, saltRounds);
+    const hashedNewPassword = await this.hashPassword(new_password);
 
     // 5. ОНОВЛЮЄМО ПАРОЛЬ В БД
     await this.prisma.user.update({
@@ -527,8 +546,7 @@ export class AuthService {
     }
 
     // 2. ХЕШУЄМО НОВИЙ ПАРОЛЬ
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(new_password, saltRounds);
+    const hashedPassword = await this.hashPassword(new_password);
 
     // 3. ТРАНЗАКЦІЯ: ОНОВЛЮЄМО ПАРОЛЬ + ПОЗНАЧАЄМО ТОКЕН ВИКОРИСТАНИМ
     await this.prisma.$transaction([

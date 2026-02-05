@@ -7,11 +7,14 @@ import {
   UseGuards,
   Request,
   Get,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { CookieService } from './services/cookie.service';
 import { RegisterDto } from './dto/register.dto';
-import { RefreshDto } from './dto/refresh.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -21,33 +24,56 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type {
   AuthenticatedRequest,
   AuthenticatedUser,
-  LoginResponse,
+  LoginApiResponse,
+  AuthServiceResult,
 } from './types/auth.types';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cookieService: CookieService,
+  ) {}
 
   /**
-   * РЕЄСТРАЦІЯ НОВОГО КОРИСТУВАЧА
+   * РЕЄСТРАЦІЯ НОВОГО КОРИСТУВАЧА (SECURE HTTP-ONLY COOKIES)
    * POST /auth/register
    * Body: { email, password, name, surname }
+   *
+   * 🔒 SECURITY UPDATE:
+   * - refresh_token встановлюється як HTTP-only cookie
+   * - НЕ повертається в response body (захист від XSS)
+   * - access_token залишається в response для API запитів
    */
   @Post('register')
   @HttpCode(HttpStatus.CREATED) // 201 Created
   async register(
     @Body() registerDto: RegisterDto,
     @Request() req: AuthenticatedRequest,
-  ): Promise<LoginResponse> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginApiResponse> {
     const userAgent = req.headers['user-agent'];
     // Безпечне отримання IP адреси
     const ipAddress = this.getClientIp(req);
 
-    return await this.authService.register(registerDto, userAgent, ipAddress);
+    const result: AuthServiceResult = await this.authService.register(
+      registerDto,
+      userAgent,
+      ipAddress,
+    );
+
+    // 🍪 ВСТАНОВЛЕННЯ HTTP-ONLY COOKIES (ОБИДВА ТОКЕНИ)
+    this.cookieService.setAuthTokens(res, result);
+
+    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНІВ (обидва в HTTP-only cookies)
+    return {
+      message: result.message,
+      user: result.user,
+    };
   }
 
   /**
-   * 🚪 ЛОГІН КОРИСТУВАЧА (PASSPORT VERSION)
+   * 🚪 ЛОГІН КОРИСТУВАЧА (SECURE HTTP-ONLY COOKIES)
    * POST /auth/login
    * Body: { email, password }
    *
@@ -57,28 +83,49 @@ export class AuthController {
    * 3. Якщо OK → req.user = user
    * 4. Якщо помилка → 401 Unauthorized
    *
+   * 🔒 SECURITY UPDATE:
+   * - refresh_token встановлюється як HTTP-only cookie
+   * - НЕ повертається в response body (захист від XSS)
+   * - access_token залишається в response для API запитів
+   *
    * 🛡️ Rate Limiting: 5 спроб на хвилину (захист від brute force)
    */
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 спроб за 60 секунд
   @UseGuards(ThrottlerGuard, LocalAuthGuard) // 🛡️ Rate Limiter + Passport Guard
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Request() req: AuthenticatedRequest): Promise<LoginResponse> {
+  async login(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginApiResponse> {
     const userAgent = req.headers['user-agent'];
     // Безпечне отримання IP адреси
     const ipAddress = this.getClientIp(req);
 
     // req.user УЖЕ перевірений LocalStrategy!
-    return await this.authService.login(req.user, userAgent, ipAddress);
+    const result: AuthServiceResult = await this.authService.login(
+      req.user,
+      userAgent,
+      ipAddress,
+    );
+
+    // 🍪 ВСТАНОВЛЕННЯ HTTP-ONLY COOKIES (ОБИДВА ТОКЕНИ)
+    this.cookieService.setAuthTokens(res, result);
+
+    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНІВ (обидва в HTTP-only cookies)
+    return {
+      message: result.message,
+      user: result.user,
+    };
   }
 
   /**
-   * 🎫 ЗАХИЩЕНИЙ РОУТ - ПРОФІЛЬ КОРИСТУВАЧА
+   * 🎫 ЗАХИЩЕНИЙ РОУТ - ПРОФІЛЬ КОРИСТУВАЧА (HTTP-ONLY COOKIES)
    * GET /auth/profile
-   * Headers: Authorization: Bearer <jwt_token>
+   * Cookie: access_token=...; HttpOnly; Secure; SameSite=Strict
    *
    * Passport автоматично:
-   * 1. Витягує JWT токен з Authorization header
+   * 1. Витягує JWT токен з HTTP-only cookie 'access_token'
    * 2. Викликає JwtStrategy.validate()
    * 3. Завантажує користувача з БД
    * 4. Якщо OK → req.user = user
@@ -93,40 +140,81 @@ export class AuthController {
   }
 
   /**
-   * 🔄 REFRESH - ОНОВЛЕННЯ ACCESS ТОКЕНУ
+   * 🔄 REFRESH - ОНОВЛЕННЯ ACCESS ТОКЕНУ (SECURE HTTP-ONLY COOKIES)
    * POST /auth/refresh
-   * Body: { refresh_token: "..." }
+   * Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict
    *
-   * Перевіряє refresh токен і видає новий access токен
+   * 🔒 SECURITY UPDATE:
+   * - refresh_token читається з HTTP-only cookie
+   * - НОВИЙ access_token встановлюється в HTTP-only cookie
+   * - НЕ потрібно передавати в request body (захист від XSS)
+   * - Браузер автоматично додає cookie до запиту
+   *
+   * Перевіряє refresh токен і видає новий access токен в cookies
    * Користувач не втрачає сесію при експірації access токену
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Body() refreshDto: RefreshDto): Promise<{
-    access_token: string;
+  async refreshToken(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{
+    message: string;
     user: AuthenticatedUser;
   }> {
-    return await this.authService.refreshAccessToken(refreshDto.refresh_token);
+    // 🍪 ЧИТАННЯ REFRESH TOKEN З HTTP-ONLY COOKIE
+    const refreshToken = this.cookieService.getRefreshToken(req);
+
+    if (!refreshToken) {
+      throw new UnauthorizedException({
+        message: 'Refresh токен не знайдено в cookies',
+        error: 'MISSING_REFRESH_TOKEN',
+        statusCode: 401,
+      });
+    }
+
+    const result = await this.authService.refreshAccessToken(refreshToken);
+
+    // 🍪 ВСТАНОВЛЕННЯ НОВОГО ACCESS TOKEN В HTTP-ONLY COOKIE
+    this.cookieService.setAccessToken(res, result.access_token);
+
+    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНУ (він в HTTP-only cookie)
+    return {
+      message: 'Access токен успішно оновлено',
+      user: result.user,
+    };
   }
 
   /**
-   * 🚪 LOGOUT - ВИЙТИ З АКАУНТУ (СТАНДАРТНИЙ ПІДХІД)
+   * 🚪 LOGOUT - ВИЙТИ З АКАУНТУ (FULL HTTP-ONLY COOKIES)
    * POST /auth/logout
-   * Headers: Authorization: Bearer <jwt_token>
-   * Body: { refresh_token: "..." }
+   * Cookie: access_token=...; HttpOnly; Secure; SameSite=Strict
+   * Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict
    *
-   * Відкликає refresh токен в БД - користувач не зможе оновити access токен
-   * Access токен залишається валідним до експірації (max 2h)
+   * 🔒 SECURITY UPDATE:
+   * - ОБА токени читаються з HTTP-only cookies
+   * - ОБА cookies автоматично очищаються після logout
+   * - Максимальний захист від XSS атак
+   *
+   * Відкликає refresh токен в БД та очищає обидва HTTP-only cookies
+   * Користувач одразу втрачає доступ до всіх захищених endpoints
    */
   @UseGuards(JwtAuthGuard) // 🛡️ Тільки залогінені можуть вийти
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
     @CurrentUser() user: AuthenticatedUser,
-    @Body('refresh_token') refreshToken?: string,
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    // Відкликаємо refresh токен користувача
+    // 🍪 ЧИТАННЯ REFRESH TOKEN З HTTP-ONLY COOKIE
+    const refreshToken = this.cookieService.getRefreshToken(req);
+
+    // Відкликаємо refresh токен користувача (навіть якщо cookie відсутній)
     await this.authService.revokeRefreshToken(user.id, refreshToken);
+
+    // 🗑️ ОЧИЩЕННЯ ОБОХ HTTP-ONLY COOKIES
+    this.cookieService.clearAuthTokens(res);
 
     return {
       message: 'Ви успішно вийшли з акаунту',
@@ -134,13 +222,13 @@ export class AuthController {
   }
 
   /**
-   * 🔐 ЗМІНА ПАРОЛЮ АВТОРИЗОВАНОГО КОРИСТУВАЧА
+   * 🔐 ЗМІНА ПАРОЛЮ АВТОРИЗОВАНОГО КОРИСТУВАЧА (HTTP-ONLY COOKIES)
    * POST /auth/change-password
-   * Headers: Authorization: Bearer <jwt_token>
+   * Cookie: access_token=...; HttpOnly; Secure; SameSite=Strict
    * Body: { current_password, new_password }
    *
    * Безпека:
-   * - Тільки авторизовані користувачі (JwtAuthGuard)
+   * - Тільки авторизовані користувачі (JwtAuthGuard з HTTP-only cookie)
    * - Перевірка поточного паролю
    * - Валідація нового паролю
    */

@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { CookieService } from './services/cookie.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { jwtConfig } from '../../config/jwt.config';
@@ -20,6 +21,7 @@ import { EmailModule } from '../email/email.module';
   controllers: [AuthController],
   providers: [
     AuthService,
+    CookieService, // 🍪 Централізоване керування HTTP-only cookies
     LocalStrategy, // 🚪 Стратегія для login (email/password)
     JwtStrategy, // 🎫 Стратегія для JWT токенів
   ],

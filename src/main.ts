@@ -2,12 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 🛡️ HELMET - Security Headers (захист від XSS, clickjacking, MIME sniffing)
   app.use(helmet());
+
+  // 🍪 COOKIE PARSER - парсить HTTP cookies в req.cookies об'єкт
+  app.use(cookieParser());
 
   // 🌍 CORS - дозволяє фронтенду робити запити з браузера
   app.enableCors({
