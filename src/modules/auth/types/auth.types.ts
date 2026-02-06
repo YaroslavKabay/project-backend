@@ -66,6 +66,7 @@ export interface AuthServiceResult {
  */
 export interface LoginApiResponse {
   message: string;
+  access_token: string; // ← SDK-friendly: повертаємо в response body
   user: AuthenticatedUser;
-  // ОБА токени передаються через HTTP-only cookies, не в response body
+  // Refresh token залишається в HTTP-only cookie (hybrid підхід)
 }
