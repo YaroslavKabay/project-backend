@@ -1,37 +1,30 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
-import type { Request } from 'express';
+import { Strategy, ExtractJwt } from 'passport-jwt';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { JwtPayload, AuthenticatedUser } from '../types/auth.types';
 
 /**
- * 🍪 JWT STRATEGY - для захищених endpoints з HTTP-only cookies
+ * 🎫 JWT STRATEGY - для захищених endpoints з Authorization header
  *
  * Як працює:
- * 1. Passport автоматично витягує JWT токен з HTTP-only cookie 'access_token'
- * 2. Перевіряє підпис токену (JWT_SECRET)
- * 3. Якщо токен валідний - викликає validate() з payload
- * 4. Якщо validate повертає user - доступ дозволено
- * 5. User потрапляє в req.user для використання в Controllers
+ * 1. SDK відправляє Authorization: Bearer <access_token>
+ * 2. Passport автоматично витягує JWT токен з header
+ * 3. Перевіряє підпис токену (JWT_SECRET)
+ * 4. Якщо токен валідний - викликає validate() з payload
+ * 5. Якщо validate повертає user - доступ дозволено
+ * 6. User потрапляє в req.user для використання в Controllers
+ *
+ * 🚀 HYBRID ПІДХІД:
+ * - Access token в Authorization header (SDK контролює)
+ * - Refresh token в HTTP-only cookie (безпечно)
  */
-
-/**
- * 🍪 CUSTOM JWT EXTRACTOR - витягує токен з HTTP-only cookie
- */
-const cookieExtractor = (req: Request): string | null => {
-  let token: string | null = null;
-  if (req && req.cookies) {
-    token = (req.cookies['access_token'] as string | undefined) || null;
-  }
-  return token;
-};
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     super({
-      // 🍪 Звідки брати токен - з HTTP-only cookie
-      jwtFromRequest: cookieExtractor, // access_token cookie
+      // 🎫 Звідки брати токен - з Authorization: Bearer header
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Standard approach
       ignoreExpiration: false, // Перевіряємо термін дії
       secretOrKey: process.env.JWT_SECRET!, // Секрет для валідації підпису (гарантовано існує через env validation)
     });

@@ -27,7 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
       },
     }),
     // 🛡️ RATE LIMITING - захист від brute force атак
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 секунд

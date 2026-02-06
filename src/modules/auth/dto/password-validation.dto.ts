@@ -3,7 +3,6 @@ import {
   MaxLength,
   IsStrongPassword,
   IsNotEmpty,
-  ValidationOptions,
 } from 'class-validator';
 
 // ================================
@@ -46,8 +45,8 @@ export class PasswordValidationMixin {
   @IsString({ message: 'Пароль повинен бути рядком' })
   @IsNotEmpty({ message: "Пароль обов'язковий" })
   @IsStrongPassword(STRONG_PASSWORD_CONFIG, { message: PASSWORD_ERROR_MESSAGE })
-  @MaxLength(MAX_PASSWORD_LENGTH, { 
-    message: `Пароль не може бути довшим ${MAX_PASSWORD_LENGTH} символів` 
+  @MaxLength(MAX_PASSWORD_LENGTH, {
+    message: `Пароль не може бути довшим ${MAX_PASSWORD_LENGTH} символів`,
   })
   password: string;
 }
@@ -58,11 +57,11 @@ export class PasswordValidationMixin {
 export class NewPasswordValidationMixin {
   @IsString({ message: 'Новий пароль повинен бути рядком' })
   @IsNotEmpty({ message: "Новий пароль обов'язковий" })
-  @IsStrongPassword(STRONG_PASSWORD_CONFIG, { 
-    message: 'Новий ' + PASSWORD_ERROR_MESSAGE.toLowerCase() 
+  @IsStrongPassword(STRONG_PASSWORD_CONFIG, {
+    message: 'Новий ' + PASSWORD_ERROR_MESSAGE.toLowerCase(),
   })
-  @MaxLength(MAX_PASSWORD_LENGTH, { 
-    message: `Новий пароль не може бути довшим ${MAX_PASSWORD_LENGTH} символів` 
+  @MaxLength(MAX_PASSWORD_LENGTH, {
+    message: `Новий пароль не може бути довшим ${MAX_PASSWORD_LENGTH} символів`,
   })
   new_password: string;
 }

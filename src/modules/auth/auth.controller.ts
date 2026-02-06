@@ -62,12 +62,13 @@ export class AuthController {
       ipAddress,
     );
 
-    // 🍪 ВСТАНОВЛЕННЯ HTTP-ONLY COOKIES (ОБИДВА ТОКЕНИ)
-    this.cookieService.setAuthTokens(res, result);
+    // 🍪 ВСТАНОВЛЕННЯ ТІЛЬКИ REFRESH TOKEN В HTTP-ONLY COOKIE (HYBRID ПІДХІД)
+    this.cookieService.setRefreshToken(res, result.refresh_token);
 
-    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНІВ (обидва в HTTP-only cookies)
+    // 📤 SDK-FRIENDLY RESPONSE: ACCESS TOKEN В BODY
     return {
       message: result.message,
+      access_token: result.access_token, // ← SDK бачить і контролює!
       user: result.user,
     };
   }
@@ -109,12 +110,13 @@ export class AuthController {
       ipAddress,
     );
 
-    // 🍪 ВСТАНОВЛЕННЯ HTTP-ONLY COOKIES (ОБИДВА ТОКЕНИ)
-    this.cookieService.setAuthTokens(res, result);
+    // 🍪 ВСТАНОВЛЕННЯ ТІЛЬКИ REFRESH TOKEN В HTTP-ONLY COOKIE (HYBRID ПІДХІД)
+    this.cookieService.setRefreshToken(res, result.refresh_token);
 
-    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНІВ (обидва в HTTP-only cookies)
+    // 📤 SDK-FRIENDLY RESPONSE: ACCESS TOKEN В BODY
     return {
       message: result.message,
+      access_token: result.access_token, // ← SDK бачить і контролює!
       user: result.user,
     };
   }
@@ -140,26 +142,24 @@ export class AuthController {
   }
 
   /**
-   * 🔄 REFRESH - ОНОВЛЕННЯ ACCESS ТОКЕНУ (SECURE HTTP-ONLY COOKIES)
+   * 🔄 REFRESH - ОНОВЛЕННЯ ACCESS ТОКЕНУ (HYBRID ПІДХІД)
    * POST /auth/refresh
    * Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict
    *
-   * 🔒 SECURITY UPDATE:
-   * - refresh_token читається з HTTP-only cookie
-   * - НОВИЙ access_token встановлюється в HTTP-only cookie
-   * - НЕ потрібно передавати в request body (захист від XSS)
-   * - Браузер автоматично додає cookie до запиту
+   * 🔄 HYBRID ПІДХІД:
+   * - refresh_token читається з HTTP-only cookie (безпечно)
+   * - НОВИЙ access_token повертається в response body (SDK контролює)
+   * - SDK автоматично оновлює access_token в пам'яті
+   * - НЕ потрібно передавати refresh_token в request body
    *
-   * Перевіряє refresh токен і видає новий access токен в cookies
-   * Користувач не втрачає сесію при експірації access токену
+   * Перевіряє refresh токен і видає новий access токен для SDK
+   * SDK автоматично керує lifecycle access токену
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(
-    @Request() req: AuthenticatedRequest,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{
+  async refreshToken(@Request() req: AuthenticatedRequest): Promise<{
     message: string;
+    access_token: string;
     user: AuthenticatedUser;
   }> {
     // 🍪 ЧИТАННЯ REFRESH TOKEN З HTTP-ONLY COOKIE
@@ -175,28 +175,26 @@ export class AuthController {
 
     const result = await this.authService.refreshAccessToken(refreshToken);
 
-    // 🍪 ВСТАНОВЛЕННЯ НОВОГО ACCESS TOKEN В HTTP-ONLY COOKIE
-    this.cookieService.setAccessToken(res, result.access_token);
-
-    // 📤 ПОВЕРТАЄМО БЕЗ ТОКЕНУ (він в HTTP-only cookie)
+    // 📤 SDK-FRIENDLY RESPONSE: ACCESS TOKEN В BODY
     return {
       message: 'Access токен успішно оновлено',
+      access_token: result.access_token, // ← SDK отримає новий токен
       user: result.user,
     };
   }
 
   /**
-   * 🚪 LOGOUT - ВИЙТИ З АКАУНТУ (FULL HTTP-ONLY COOKIES)
+   * 🚪 LOGOUT - ВИЙТИ З АКАУНТУ (HYBRID ПІДХІД)
    * POST /auth/logout
-   * Cookie: access_token=...; HttpOnly; Secure; SameSite=Strict
+   * Authorization: Bearer access_token (SDK контролює)
    * Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict
    *
-   * 🔒 SECURITY UPDATE:
-   * - ОБА токени читаються з HTTP-only cookies
-   * - ОБА cookies автоматично очищаються після logout
-   * - Максимальний захист від XSS атак
+   * 🔄 HYBRID ПІДХІД:
+   * - Access token в Authorization header (SDK знищує з memory)
+   * - Refresh token в HTTP-only cookie (очищуємо)
+   * - SDK повинен видалити access token з пам'яті
    *
-   * Відкликає refresh токен в БД та очищає обидва HTTP-only cookies
+   * Відкликає refresh токен в БД та очищає refresh cookie
    * Користувач одразу втрачає доступ до всіх захищених endpoints
    */
   @UseGuards(JwtAuthGuard) // 🛡️ Тільки залогінені можуть вийти
@@ -213,8 +211,8 @@ export class AuthController {
     // Відкликаємо refresh токен користувача (навіть якщо cookie відсутній)
     await this.authService.revokeRefreshToken(user.id, refreshToken);
 
-    // 🗑️ ОЧИЩЕННЯ ОБОХ HTTP-ONLY COOKIES
-    this.cookieService.clearAuthTokens(res);
+    // 🗑️ ОЧИЩЕННЯ REFRESH TOKEN COOKIE (ACCESS TOKEN SDK знищить сам)
+    this.cookieService.clearRefreshToken(res);
 
     return {
       message: 'Ви успішно вийшли з акаунту',
