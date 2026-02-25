@@ -15,14 +15,17 @@ export class EmailService {
   constructor() {
     // 🔧 НАЛАШТУВАННЯ GMAIL SMTP
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // false для port 587
       auth: {
-        user: process.env.GMAIL_EMAIL, // Ваш Gmail
-        pass: process.env.GMAIL_APP_PASSWORD, // App Password з Google
+        user: process.env.GMAIL_USER, // Виправлено під Railway variables
+        pass: process.env.GMAIL_PASS, // Виправлено під Railway variables
       },
-      // 📧 Додаткові налаштування для безпеки
-      secure: true,
-      port: 465,
+      // 🛡️ Додаткові налаштування для Railway timeout
+      connectionTimeout: 60000, // 60 секунд
+      greetingTimeout: 30000, // 30 секунд
+      socketTimeout: 60000, // 60 секунд
     });
 
     // 🧪 ПЕРЕВІРКА ПІДКЛЮЧЕННЯ ПРИ ЗАПУСКУ
