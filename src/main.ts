@@ -16,9 +16,11 @@ async function bootstrap() {
   // 🌍 CORS - дозволяє фронтенду робити запити з браузера
   app.enableCors({
     origin: [
-      'http://localhost:3000', // Next.js dev server
-      'http://localhost:3001', // Next.js альтернативний порт (якщо 3000 зайнятий)
-      // TODO: Додати продакшн домен коли буде готовий
+      'http://localhost:3000', // Next.js dev server (development)
+      'http://localhost:3001', // Next.js альтернативний порт
+      'https://*.vercel.app', // Vercel frontend domains
+      'https://*.railway.app', // Railway domains (для тестування)
+      // Frontend production domain буде додано пізніше
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true, // Дозволити cookies та Authorization headers
