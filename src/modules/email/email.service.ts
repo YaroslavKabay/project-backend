@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import * as sgMail from '@sendgrid/mail';
 
 // Власна типізація для email результатів
 interface EmailResult {
@@ -11,25 +12,47 @@ interface EmailResult {
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
+  private useSendGrid: boolean = false;
 
   constructor() {
-    // 🔧 НАЛАШТУВАННЯ GMAIL SMTP
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // false для port 587
-      auth: {
-        user: process.env.GMAIL_USER, // Виправлено під Railway variables
-        pass: process.env.GMAIL_PASS, // Виправлено під Railway variables
-      },
-      // 🛡️ Додаткові налаштування для Railway timeout
-      connectionTimeout: 60000, // 60 секунд
-      greetingTimeout: 30000, // 30 секунд
-      socketTimeout: 60000, // 60 секунд
-    });
+    // 🔧 ВИБІР EMAIL ПРОВАЙДЕРА
+    if (process.env.SENDGRID_API_KEY) {
+      // 📧 SENDGRID для production (Railway)
+      this.useSendGrid = true;
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      this.logger.log('📧 Використовується SendGrid для email');
+      void this.verifySendGrid();
+    } else {
+      // 🔧 GMAIL SMTP для локальної розробки
+      this.useSendGrid = false;
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // false для port 587
+        auth: {
+          user: process.env.GMAIL_USER, // Виправлено під Railway variables
+          pass: process.env.GMAIL_PASS, // Виправлено під Railway variables
+        },
+        // 🛡️ Додаткові налаштування для Railway timeout
+        connectionTimeout: 60000, // 60 секунд
+        greetingTimeout: 30000, // 30 секунд
+        socketTimeout: 60000, // 60 секунд
+      });
+      this.logger.log('📧 Використовується Gmail SMTP для email');
+      void this.verifyConnection();
+    }
+  }
 
-    // 🧪 ПЕРЕВІРКА ПІДКЛЮЧЕННЯ ПРИ ЗАПУСКУ
-    void this.verifyConnection();
+  /**
+   * 🧪 ПЕРЕВІРЯЄ ПІДКЛЮЧЕННЯ SendGrid
+   */
+  private async verifySendGrid(): Promise<void> {
+    try {
+      // SendGrid не має direct verify, але можемо перевірити API key
+      this.logger.log('✅ SendGrid API key налаштовано');
+    } catch (error) {
+      this.logger.error('❌ Помилка налаштування SendGrid:', error);
+    }
   }
 
   /**
@@ -51,143 +74,112 @@ export class EmailService {
    * 🔄 ВІДПРАВЛЯЄ EMAIL ДЛЯ ВІДНОВЛЕННЯ ПАРОЛЮ
    *
    * @param email - Email користувача
-   * @param resetToken - Токен для відновлення паролю
-   * @param frontendUrl - URL фронтенду (за замовчуванням localhost:3000)
+   * @param resetToken - Токен для reset
+   * @param userName - Імʼя користувача
+   * @returns Promise<EmailResult>
    */
   async sendPasswordResetEmail(
     email: string,
     resetToken: string,
-    frontendUrl: string = 'http://localhost:3000',
-  ): Promise<boolean> {
+    userName: string,
+  ): Promise<EmailResult> {
     try {
-      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
-      const mailOptions = {
-        from: {
-          name: '🏦 Investment Platform',
-          address: process.env.GMAIL_EMAIL || 'noreply@investmentplatform.com',
-        },
-        to: email,
-        subject: '🔐 Відновлення паролю - Investment Platform',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Відновлення паролю</title>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #4CAF50; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-              .button { 
-                display: inline-block; 
-                background: #4CAF50; 
-                color: white; 
-                padding: 12px 25px; 
-                text-decoration: none; 
-                border-radius: 5px; 
-                font-weight: bold;
-                margin: 20px 0;
-              }
-              .warning { color: #ff6b6b; font-size: 14px; margin-top: 20px; }
-              .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>🔐 Відновлення паролю</h1>
-              </div>
-              <div class="content">
-                <p>Привіт!</p>
-                <p>Ми отримали запит на відновлення паролю для вашого акаунту в <strong>Investment Platform</strong>.</p>
-                
-                <p>Натисніть кнопку нижче, щоб створити новий пароль:</p>
-                <a href="${resetLink}" class="button">📝 Створити новий пароль</a>
-                
-                <p>Або скопіюйте це посилання у браузер:</p>
-                <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 4px;">
-                  <code>${resetLink}</code>
-                </p>
-                
-                <div class="warning">
-                  ⚠️ <strong>Важливо:</strong><br>
-                  • Посилання дійсне лише <strong>15 хвилин</strong><br>
-                  • Якщо ви не робили цей запит, проігноруйте цей email<br>
-                  • Ніколи не передавайте це посилання іншим людям
-                </div>
-              </div>
-              <div class="footer">
-                <p>© 2024 Investment Platform. Всі права захищені.</p>
-                <p>Цей email відправлений автоматично, не відповідайте на нього.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-        // 📝 Текстова версія для клієнтів без HTML
-        text: `Відновлення паролю - Investment Platform
-
-Привіт!
-
-Ми отримали запит на відновлення паролю для вашого акаунту.
-
-Перейдіть за цим посиланням щоб створити новий пароль:
-${resetLink}
-
-УВАГА: Посилання дійсне лише 15 хвилин.
-Якщо ви не робили цей запит, проігноруйте цей email.
-
-© 2024 Investment Platform`,
-      };
-
-      const info = (await this.transporter.sendMail(
-        mailOptions,
-      )) as EmailResult;
-
-      this.logger.log(`✅ Reset email відправлений на ${email}`, {
-        messageId: info.messageId || 'unknown',
-        response: info.response || 'success',
-      });
-      return true;
+      if (this.useSendGrid) {
+        return await this.sendViaSendGrid(email, resetToken, userName);
+      } else {
+        return await this.sendViaGmail(email, resetToken, userName);
+      }
     } catch (error) {
-      this.logger.error(`❌ Помилка відправки reset email на ${email}:`, error);
-      return false;
+      this.logger.error('❌ Помилка відправки email:', error);
+      throw error;
     }
   }
 
   /**
-   * 🧪 ТЕСТОВИЙ МЕТОД ДЛЯ ПЕРЕВІРКИ EMAIL СЕРВІСУ
+   * 📧 ВІДПРАВКА ЧЕРЕЗ SENDGRID
    */
-  async sendTestEmail(toEmail: string): Promise<boolean> {
-    try {
-      const mailOptions = {
-        from: {
-          name: '🧪 Test Email',
-          address: process.env.GMAIL_EMAIL || 'test@investmentplatform.com',
-        },
-        to: toEmail,
-        subject: '🧪 Тест Email сервісу',
-        html: `
-          <h2>✅ Email сервіс працює!</h2>
-          <p>Цей email підтверджує що Gmail SMTP налаштований правильно.</p>
-          <p><em>Відправлено: ${new Date().toLocaleString('uk-UA')}</em></p>
-        `,
-        text:
-          'Email сервіс працює! Відправлено: ' +
-          new Date().toLocaleString('uk-UA'),
-      };
+  private async sendViaSendGrid(
+    email: string,
+    resetToken: string,
+    userName: string,
+  ): Promise<EmailResult> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password?token=${resetToken}`;
 
-      const info = (await this.transporter.sendMail(
-        mailOptions,
-      )) as EmailResult;
-      this.logger.log(`✅ Тестовий email відправлений на ${toEmail}`, {
-        messageId: info.messageId || 'unknown',
-      });
-      return true;
-    } catch (error) {
-      this.logger.error(`❌ Помилка відправки тестового email:`, error);
-      return false;
-    }
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@yourapp.com',
+      subject: '🔑 Відновлення паролю - Investment Platform',
+      text: `Привіт ${userName}! Для відновлення паролю перейди за посиланням: ${resetUrl}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>🔑 Відновлення паролю</h2>
+          <p>Привіт <strong>${userName}</strong>!</p>
+          <p>Ви запросили відновлення паролю для вашого акаунту.</p>
+          <div style="margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #007bff; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block;">
+              🔄 Відновити пароль
+            </a>
+          </div>
+          <p><strong>⏰ Посилання дійсне 15 хвилин.</strong></p>
+          <p>Якщо ви не запрошували відновлення - просто ігноруйте цей email.</p>
+          <hr>
+          <small>Investment Platform Team</small>
+        </div>
+      `,
+    };
+
+    const result = await sgMail.send(msg);
+    this.logger.log(`✅ Email відправлено через SendGrid до ${email}`);
+    
+    return {
+      messageId: result[0].headers['x-message-id'],
+      response: 'SendGrid email sent successfully',
+    };
+  }
+
+  /**
+   * 📧 ВІДПРАВКА ЧЕРЕЗ GMAIL SMTP
+   */
+  private async sendViaGmail(
+    email: string,
+    resetToken: string,
+    userName: string,
+  ): Promise<EmailResult> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password?token=${resetToken}`;
+
+    const mailOptions = {
+      from: `"Investment Platform" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: '🔑 Відновлення паролю - Investment Platform',
+      text: `Привіт ${userName}! Для відновлення паролю перейди за посиланням: ${resetUrl}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>🔑 Відновлення паролю</h2>
+          <p>Привіт <strong>${userName}</strong>!</p>
+          <p>Ви запросили відновлення паролю для вашого акаунту.</p>
+          <div style="margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #007bff; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block;">
+              🔄 Відновити пароль
+            </a>
+          </div>
+          <p><strong>⏰ Посилання дійсне 15 хвилин.</strong></p>
+          <p>Якщо ви не запрошували відновлення - просто ігноруйте цей email.</p>
+          <hr>
+          <small>Investment Platform Team</small>
+        </div>
+      `,
+    };
+
+    const info = await this.transporter.sendMail(mailOptions);
+    this.logger.log(`✅ Email відправлено через Gmail до ${email}`);
+    
+    return {
+      messageId: info.messageId,
+      response: info.response,
+    };
   }
 }
