@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "investment-platform-auth-complete",
-		"name": "🏦 Investment Platform - Complete Auth API",
-		"description": "🚀 Повна колекція для тестування HYBRID аутентифікації\n\n🔄 **HYBRID SECURITY APPROACH:**\n- 🎫 Access tokens в response body → Authorization: Bearer header (SDK контролює)\n- 🍪 Refresh tokens в HTTP-only cookies (захист від XSS)\n- 📱 SDK-friendly архітектура для сучасних SPA\n- ✅ JWT Strategy читає з Authorization header (industry standard)\n- ✅ Logout з очищенням refresh cookie\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Production logging для всіх операцій\n\n⚠️ **КРИТИЧНО:** \n1. Увімкніть 'Send cookies automatically' в Postman settings!\n2. Manual налаштування Authorization: Bearer headers для protected routes\n\n🔐 **АРХІТЕКТУРА:** Universal API для будь-яких клієнтів (web, mobile, SDK)\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії (через Authorization header)\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
+		"_postman_id": "localhost-testing-complete",
+		"name": "🔧 [LOCALHOST] Investment Platform - Complete Auth API",
+		"description": "🧪 **ЛОКАЛЬНЕ ТЕСТУВАННЯ** - повна копія продакшн колекції\n\n🔄 **HYBRID SECURITY APPROACH:**\n- 🎫 Access tokens в response body → Authorization: Bearer header (SDK контролює)\n- 🍪 Refresh tokens в HTTP-only cookies (захист від XSS)\n- 📱 SDK-friendly архітектура для сучасних SPA\n- ✅ JWT Strategy читає з Authorization header (industry standard)\n- ✅ Logout з очищенням refresh cookie\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Production logging для всіх операцій\n\n⚠️ **LOCALHOST SETUP:**\n1. PostgreSQL: `brew services start postgresql@14`\n2. Server: `npm run start:dev`\n3. Увімкни 'Send cookies automatically' в Postman!\n4. Manual налаштування Authorization: Bearer headers\n\n📧 **EMAIL TESTING:**\n- Без SENDGRID_API_KEY → Gmail SMTP (або token fallback)\n- З SENDGRID_API_KEY → SendGrid\n\n🔐 **АРХІТЕКТУРА:** Universal API для будь-яких клієнтів (web, mobile, SDK)\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії (через Authorization header)\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -14,9 +14,9 @@
 		},
 		{
 			"key": "test_email",
-			"value": "yarko.kabay@gmail.com",
+			"value": "test@localhost.dev",
 			"type": "string",
-			"description": "Email для тестування (справжній для password reset)"
+			"description": "Test email for localhost (change as needed)"
 		},
 		{
 			"key": "access_token",
@@ -62,17 +62,17 @@
 							"script": {
 								"type": "text/javascript",
 								"exec": [
-									"pm.test('Status code is 201', function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test('Response has required fields', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData).to.have.property('access_token');",
-									"    pm.expect(jsonData).to.have.property('user');",
-									"    // HYBRID: access_token в response, refresh_token в HTTP-only cookie",
-									"});",
+								"pm.test('Status code is 201', function () {",
+								"    pm.response.to.have.status(201);",
+								"});",
+								"",
+								"pm.test('Response has required fields', function () {",
+								"    const jsonData = pm.response.json();",
+								"    pm.expect(jsonData).to.have.property('message');",
+								"    pm.expect(jsonData).to.have.property('access_token');",
+								"    pm.expect(jsonData).to.have.property('user');",
+								"    // HYBRID: access_token в response, refresh_token в HTTP-only cookie",
+								"});",
 									"",
 									"pm.test('User data returned', function () {",
 									"    const jsonData = pm.response.json();",
@@ -81,15 +81,15 @@
 									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
 									"});",
 									"",
-									"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
-									"const jsonData = pm.response.json();",
-									"if (jsonData.access_token) {",
-									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-									"    console.log('✅ Користувач успішно увійшов');",
-									"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
-									"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
-									"    console.log('👤 User ID:', jsonData.user?.id);",
-									"}"
+								"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
+								"const jsonData = pm.response.json();",
+								"if (jsonData.access_token) {",
+								"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+								"    console.log('✅ Користувач успішно увійшов');",
+								"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
+								"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+								"    console.log('👤 User ID:', jsonData.user?.id);",
+								"}"
 								]
 							}
 						}
@@ -229,12 +229,12 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test('Response has required fields', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData).to.have.property('user');",
-									"    // ОБА токени тепер в HTTP-only cookies, не в response",
-									"});",
+								"pm.test('Response has required fields', function () {",
+								"    const jsonData = pm.response.json();",
+								"    pm.expect(jsonData).to.have.property('message');",
+								"    pm.expect(jsonData).to.have.property('user');",
+								"    // ОБА токени тепер в HTTP-only cookies, не в response",
+								"});",
 									"",
 									"pm.test('User data returned', function () {",
 									"    const jsonData = pm.response.json();",
@@ -243,15 +243,15 @@
 									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
 									"});",
 									"",
-									"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
-									"const jsonData = pm.response.json();",
-									"if (jsonData.access_token) {",
-									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-									"    console.log('✅ Користувач успішно увійшов');",
-									"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
-									"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
-									"    console.log('👤 User ID:', jsonData.user?.id);",
-									"}"
+								"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
+								"const jsonData = pm.response.json();",
+								"if (jsonData.access_token) {",
+								"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+								"    console.log('✅ Користувач успішно увійшов');",
+								"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
+								"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+								"    console.log('👤 User ID:', jsonData.user?.id);",
+								"}"
 								]
 							}
 						}
@@ -460,10 +460,10 @@
 									"    pm.expect(jsonData.message).to.include('успішно');",
 									"});",
 									"",
-									"// 🤖 СИМУЛЯЦІЯ SDK: Очищуємо access_token з пам'яті",
-									"pm.collectionVariables.set('access_token', '');",
-									"console.log('✅ Logged out - refresh token revoked in DB');",
-									"console.log('🤖 SDK simulation: access_token cleared from memory');"
+								"// 🤖 СИМУЛЯЦІЯ SDK: Очищуємо access_token з пам'яті",
+								"pm.collectionVariables.set('access_token', '');",
+								"console.log('✅ Logged out - refresh token revoked in DB');",
+								"console.log('🤖 SDK simulation: access_token cleared from memory');"
 								]
 							}
 						}
@@ -1173,11 +1173,11 @@
 					"// 🎯 Глобальний pre-request скрипт",
 					"console.log('🚀 Executing:', pm.request.method, pm.request.url.path.join('/'));",
 					"",
-					"// Інформація про HTTP-only cookies",
-					"console.log('🍪 ОБА токени зберігаються в HTTP-only cookies:');",
-					"console.log('  - access_token: автоматично надсилається з кожним запитом');",
-					"console.log('  - refresh_token: використовується для оновлення access токена');",
-					"console.log('🔒 Токени недоступні JavaScript коду (максимальна безпека)');"
+				"// Інформація про HTTP-only cookies",
+				"console.log('🍪 ОБА токени зберігаються в HTTP-only cookies:');",
+				"console.log('  - access_token: автоматично надсилається з кожним запитом');",
+				"console.log('  - refresh_token: використовується для оновлення access токена');",
+				"console.log('🔒 Токени недоступні JavaScript коду (максимальна безпека)');"
 				]
 			}
 		},

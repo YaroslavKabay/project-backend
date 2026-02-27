@@ -497,6 +497,7 @@ export class AuthService {
     const emailSent = await this.emailService.sendPasswordResetEmail(
       email,
       resetToken,
+      user.name, // Додаємо ім'я користувача для персоналізації
     );
 
     if (emailSent) {

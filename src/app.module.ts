@@ -21,6 +21,9 @@ import { AuthModule } from './modules/auth/auth.module';
           .valid('development', 'production', 'test')
           .default('development'),
         PORT: Joi.number().default(3000),
+        // 📧 SENDGRID EMAIL СЕРВІС
+        SENDGRID_API_KEY: Joi.string().required(),
+        SENDGRID_FROM_EMAIL: Joi.string().email().required(),
       }),
       validationOptions: {
         abortEarly: false, // Показати всі помилки валідації, не тільки першу
