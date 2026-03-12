@@ -15,11 +15,18 @@ import type { Response, Request } from 'express';
 export class CookieService {
   /**
    * 🍪 Базові налаштування безпеки для всіх cookies
+   *
+   * ⚠️ SameSite=None для production: фронт (Vercel) і бек (Railway) — різні домени.
+   * З SameSite=Strict браузер НЕ відправляє cookie при cross-origin запитах.
+   * SameSite=None вимагає Secure=true (HTTPS).
    */
   private readonly cookieOptions = {
     httpOnly: true, // JavaScript НЕ може прочитати (захист від XSS)
     secure: process.env.NODE_ENV === 'production', // HTTPS тільки в продакшні
-    sameSite: 'strict' as const, // Захист від CSRF атак
+    sameSite:
+      process.env.NODE_ENV === 'production'
+        ? ('none' as const)
+        : ('strict' as const),
   };
 
   /**
@@ -38,11 +45,7 @@ export class CookieService {
    * Access token не очищуємо, бо він в SDK memory
    */
   clearRefreshToken(res: Response): void {
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    res.clearCookie('refresh_token', this.cookieOptions);
   }
 
   /**
