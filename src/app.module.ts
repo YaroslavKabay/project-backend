@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -37,8 +38,9 @@ import { AuthModule } from './modules/auth/auth.module';
         limit: 10, // Максимум 10 запитів на хвилину на один IP
       },
     ]),
-    PrismaModule, // База даних
-    AuthModule, // Аутентифікація
+    PrismaModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
