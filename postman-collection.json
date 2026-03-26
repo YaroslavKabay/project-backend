@@ -1609,6 +1609,402 @@
           ]
         }
       ]
+    },
+    {
+      "name": "📁 11. MARKETING CARDS 🎯",
+      "item": [
+        {
+          "name": "✅ Get All Marketing Cards (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "✅ **ПУБЛІЧНИЙ СПИСОК МАРКЕТИНГОВИХ КАРТОК**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив карток"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Create Marketing Card (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"title\": \"Test Card\",\n  \"content\": \"Test content\",\n  \"imageUrls\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "✅ **СТВОРЕННЯ КАРТКИ (Admin)**\n\n⚠️ Потрібен project_id зі змінних\n\nОчікуваний результат:\n- Status: 201 Created"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('marketing_card_id', pm.response.json().id);",
+                  "console.log('✅ Card created, id:', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Update Marketing Card (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Card\",\n  \"content\": \"Updated content\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards/{{marketing_card_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards",
+                "{{marketing_card_id}}"
+              ]
+            },
+            "description": "✅ **ОНОВЛЕННЯ КАРТКИ (Admin)**\n\nОчікуваний результат:\n- Status: 200 OK"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Title updated', () => pm.expect(pm.response.json().title).to.eql('Updated Card'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Create Duplicate Card (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"title\": \"Duplicate\",\n  \"content\": \"Duplicate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "❌ **ПРОЕКТ ВЖЕ МАЄ КАРТКУ**\n\nОчікуваний результат:\n- Status: 409 Conflict"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Delete Marketing Card (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/marketing-cards/{{marketing_card_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards",
+                "{{marketing_card_id}}"
+              ]
+            },
+            "description": "✅ **ВИДАЛЕННЯ КАРТКИ (Admin)**\n\nОчікуваний результат:\n- Status: 204 No Content"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 12. USER PROJECTS 👥",
+      "item": [
+        {
+          "name": "✅ Get My Projects (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "✅ **ПРОЕКТИ ПОТОЧНОГО ЮЗЕРА**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив UserProject з деталями проекту"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Add User To Project (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"projectId\": \"{{project_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "✅ **ДОДАТИ ЮЗЕРА В ПРОЕКТ (Admin)**\n\n⚠️ Вкажи реальний userId\n\nОчікуваний результат:\n- Status: 201 Created"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('user_project_id', pm.response.json().id);",
+                  "console.log('✅ UserProject created, id:', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Get My Project By Id (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects/{{user_project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects",
+                "{{user_project_id}}"
+              ]
+            },
+            "description": "✅ **ДЕТАЛІ ОДНОГО USER PROJECT**\n\nОчікуваний результат:\n- Status: 200 OK"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Add Duplicate User To Project (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"projectId\": \"{{project_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "❌ **ЮЗЕР ВЖЕ В ПРОЕКТІ**\n\nОчікуваний результат:\n- Status: 409 Conflict"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Remove User From Project (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects/{{user_project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects",
+                "{{user_project_id}}"
+              ]
+            },
+            "description": "✅ **ВИДАЛИТИ ЮЗЕРА З ПРОЕКТУ (Admin)**\n\nОчікуваний результат:\n- Status: 204 No Content"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "event": [

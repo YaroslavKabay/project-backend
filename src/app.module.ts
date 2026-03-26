@@ -8,6 +8,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { MarketingCardsModule } from './modules/marketing-cards/marketing-cards.module';
+import { UserProjectsModule } from './modules/user-projects/user-projects.module';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { ProjectsModule } from './modules/projects/projects.module';
     AuthModule,
     UsersModule,
     ProjectsModule,
+    MarketingCardsModule,
+    UserProjectsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
