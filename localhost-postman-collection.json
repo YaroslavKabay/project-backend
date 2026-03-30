@@ -2005,6 +2005,799 @@
           ]
         }
       ]
+    },
+    {
+      "name": "📁 13. INVESTMENTS 💰",
+      "item": [
+        {
+          "name": "GET /investments/my - Мої інвестиції (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/my",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "my"]
+            },
+            "description": "✅ **МОЇ ІНВЕСТИЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- Array інвестицій поточного юзера"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/admin - Всі інвестиції (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/admin",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "admin"]
+            },
+            "description": "✅ **ВСІ ІНВЕСТИЦІЇ (Admin/Manager)**\n\nОчікуваний результат:\n- Status: 200\n- Array всіх інвестицій"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/admin?userProjectId=1 - Фільтр по UserProject",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/admin?userProjectId=1",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "admin"],
+              "query": [{ "key": "userProjectId", "value": "1" }]
+            },
+            "description": "✅ **ФІЛЬТР ІНВЕСТИЦІЙ ПО USER PROJECT (Admin)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/:id - Одна інвестиція",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/1",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "1"]
+            },
+            "description": "✅ **ОДНА ІНВЕСТИЦІЯ**\n\nЮзер бачить тільки власні, Admin бачить будь-яку"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 403', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /investments - Створити інвестицію (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userProjectId\": 1,\n  \"startCapital\": 10000,\n  \"currentCapital\": 11500,\n  \"hasIncome\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments",
+              "host": ["{{base_url}}"],
+              "path": ["investments"]
+            },
+            "description": "✅ **СТВОРИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nprofitPercentage та capitalization розраховуються автоматично:\n- profitPercentage = ((11500-10000)/10000)*100 = 15%\n- capitalization = 11500-10000 = 1500\n\nТакож автоматично оновлюється UserProject.totalInvested"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('profitPercentage calculated automatically', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('profitPercentage');",
+                  "    pm.expect(body.profitPercentage).to.equal(15);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('investment_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /investments/:id - Оновити капітали (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentCapital\": 12000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}"]
+            },
+            "description": "✅ **ОНОВИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nОновлення currentCapital — profitPercentage та capitalization перераховуються автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('profitPercentage recalculated', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.profitPercentage).to.equal(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /investments/:id/status - Змінити статус (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAUSED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}", "status"]
+            },
+            "description": "✅ **ЗМІНИТИ СТАТУС ІНВЕСТИЦІЇ**\n\nДопустимі значення: ACTIVE, SOLD, PAUSED\n\nПри SOLD/PAUSED — виключається з розрахунку UserProject.totalInvested"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status updated', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.equal('PAUSED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /investments/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ІНВЕСТИЦІЮ (Admin)**\n\nПісля видалення UserProject.totalInvested перераховується автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /investments - 403 Forbidden (User role)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userProjectId\": 1,\n  \"startCapital\": 5000,\n  \"currentCapital\": 5500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments",
+              "host": ["{{base_url}}"],
+              "path": ["investments"]
+            },
+            "description": "❌ **ЗАБЛОКОВАНО ДЛЯ USER РОЛІ**\n\nОчікуваний результат: 403 Forbidden"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 14. TRANSACTIONS 💳",
+      "item": [
+        {
+          "name": "GET /transactions/my - Мої транзакції (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/my?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "my"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has pagination meta', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.have.property('meta');",
+                  "    pm.expect(body.meta).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /transactions/admin - Всі транзакції (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/admin?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "admin"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "✅ **ВСІ ТРАНЗАКЦІЇ (Admin/Manager)**\n\nОчікуваний результат: 200 + paginated list"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - DEPOSIT (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"DEPOSIT\",\n  \"amount\": 5000,\n  \"paymentMethod\": \"bank_transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "✅ **ПОПОВНЕННЯ БАЛАНСУ (Admin)**\n\nDEPOSIT → балансBefore + amount = balanceAfter\nUser.balance оновлюється автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('balanceBefore and balanceAfter present', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('balanceBefore');",
+                  "    pm.expect(body).to.have.property('balanceAfter');",
+                  "    pm.expect(body.balanceAfter).to.be.above(body.balanceBefore);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('transaction_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - WITHDRAWAL (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"WITHDRAWAL\",\n  \"amount\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "✅ **ВИВЕДЕННЯ КОШТІВ (Admin)**\n\nWITHDRAWAL → balance зменшується\nЯкщо balance < amount → 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 400', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - 400 Insufficient balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"WITHDRAWAL\",\n  \"amount\": 9999999\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "❌ **НЕДОСТАТНЬО КОШТІВ**\n\nОчікуваний результат: 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /transactions/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "{{transaction_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ТРАНЗАКЦІЮ (Admin)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 15. DIVIDENDS 🏦",
+      "item": [
+        {
+          "name": "GET /dividends/my - Мої дивіденди (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/my",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "my"]
+            },
+            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /dividends/admin - Всі дивіденди (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/admin",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "admin"]
+            },
+            "description": "✅ **ВСІ ДИВІДЕНДИ (Admin/Manager)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /dividends - Нарахувати дивіденд (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investmentId\": 1,\n  \"userId\": 1,\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends",
+              "host": ["{{base_url}}"],
+              "path": ["dividends"]
+            },
+            "description": "✅ **НАРАХУВАТИ ДИВІДЕНД (Admin/Manager)**\n\nСтатус PENDING за замовчуванням.\nВиплата відбувається через PATCH /dividends/:id/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status is PENDING by default', () => {",
+                  "    pm.expect(pm.response.json().status).to.equal('PENDING');",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('dividend_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - Виплатити (PAID)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "✅ **ВИПЛАТИТИ ДИВІДЕНД (Admin/Manager)**\n\nPAID → зараховує суму на баланс юзера + автоматично створює Transaction типу DIVIDEND_PAYMENT"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Dividend status is PAID', () => {",
+                  "    pm.expect(pm.response.json().status).to.equal('PAID');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - 400 Already PAID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "❌ **ПОВТОРНА ВИПЛАТА ЗАБЛОКОВАНА**\n\nОчікуваний результат: 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - CANCELLED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "✅ **СКАСУВАТИ ДИВІДЕНД (Admin/Manager)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /dividends/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ДИВІДЕНД (Admin)**\n\nВидалення заблоковано для PAID дивідендів → 400"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 400', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 16. DASHBOARD 📊",
+      "item": [
+        {
+          "name": "GET /dashboard - Агреговані дані юзера",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "✅ **ДАШБОРД ЮЗЕРА**\n\nПовертає агреговані дані для 3 карточок:\n- totalInvested — загальна сума початкових капіталів по активних інвестиціях\n- capitalization — поточний приріст (currentCapital - startCapital)\n- totalDividends — сума виплачених дивідендів"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Dashboard has required fields', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('totalInvested');",
+                  "    pm.expect(body).to.have.property('capitalization');",
+                  "    pm.expect(body).to.have.property('totalDividends');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /dashboard - 401 Unauthorized",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "❌ **БЕЗ ТОКЕНА — ЗАБЛОКОВАНО**\n\nОчікуваний результат: 401 Unauthorized"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "event": [

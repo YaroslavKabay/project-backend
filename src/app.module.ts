@@ -10,6 +10,10 @@ import { UsersModule } from './modules/users/users.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { MarketingCardsModule } from './modules/marketing-cards/marketing-cards.module';
 import { UserProjectsModule } from './modules/user-projects/user-projects.module';
+import { InvestmentsModule } from './modules/investments/investments.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
+import { DividendsModule } from './modules/dividends/dividends.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -47,6 +51,10 @@ import { UserProjectsModule } from './modules/user-projects/user-projects.module
     ProjectsModule,
     MarketingCardsModule,
     UserProjectsModule,
+    InvestmentsModule,
+    TransactionsModule,
+    DividendsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
