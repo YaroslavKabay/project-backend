@@ -6,6 +6,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { MarketingCardsModule } from './modules/marketing-cards/marketing-cards.module';
+import { UserProjectsModule } from './modules/user-projects/user-projects.module';
+import { InvestmentsModule } from './modules/investments/investments.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
+import { DividendsModule } from './modules/dividends/dividends.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -37,8 +45,16 @@ import { AuthModule } from './modules/auth/auth.module';
         limit: 10, // Максимум 10 запитів на хвилину на один IP
       },
     ]),
-    PrismaModule, // База даних
-    AuthModule, // Аутентифікація
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    ProjectsModule,
+    MarketingCardsModule,
+    UserProjectsModule,
+    InvestmentsModule,
+    TransactionsModule,
+    DividendsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

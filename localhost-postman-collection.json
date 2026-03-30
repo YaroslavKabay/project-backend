@@ -1,1208 +1,2844 @@
 {
-	"info": {
-		"_postman_id": "localhost-testing-complete",
-		"name": "🔧 [LOCALHOST] Investment Platform - Complete Auth API",
-		"description": "🧪 **ЛОКАЛЬНЕ ТЕСТУВАННЯ** - повна копія продакшн колекції\n\n🔄 **HYBRID SECURITY APPROACH:**\n- 🎫 Access tokens в response body → Authorization: Bearer header (SDK контролює)\n- 🍪 Refresh tokens в HTTP-only cookies (захист від XSS)\n- 📱 SDK-friendly архітектура для сучасних SPA\n- ✅ JWT Strategy читає з Authorization header (industry standard)\n- ✅ Logout з очищенням refresh cookie\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Production logging для всіх операцій\n\n⚠️ **LOCALHOST SETUP:**\n1. PostgreSQL: `brew services start postgresql@14`\n2. Server: `npm run start:dev`\n3. Увімкни 'Send cookies automatically' в Postman!\n4. Manual налаштування Authorization: Bearer headers\n\n📧 **EMAIL TESTING:**\n- Без SENDGRID_API_KEY → Gmail SMTP (або token fallback)\n- З SENDGRID_API_KEY → SendGrid\n\n🔐 **АРХІТЕКТУРА:** Universal API для будь-яких клієнтів (web, mobile, SDK)\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії (через Authorization header)\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:3000",
-			"type": "string",
-			"description": "Base URL сервера"
-		},
-		{
-			"key": "test_email",
-			"value": "test@localhost.dev",
-			"type": "string",
-			"description": "Test email for localhost (change as needed)"
-		},
-		{
-			"key": "access_token",
-			"value": "",
-			"type": "string",
-			"description": "Access token для Authorization Bearer header (hybrid підхід)"
-		}
-	],
-	"item": [
-		{
-			"name": "📁 1. РЕЄСТРАЦІЯ",
-			"item": [
-				{
-					"name": "✅ Register Success",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"name\": \"Yarko\",\n  \"surname\": \"Kabay\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "✅ **УСПІШНА РЕЄСТРАЦІЯ З ЛОГУВАННЯМ**\n\n**Що тестуємо:**\n- Валідація всіх полів\n- bcrypt хешування паролю\n- Автоматичний логін після реєстрації\n- JWT + Refresh токени\n- Збереження в БД\n\n**Логи в консолі:**\n- `✅ New user registered and logged in: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 201 Created\n- 2 токени: access (2h) + refresh (14d)\n- Дані користувача БЕЗ паролю"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-								"pm.test('Status code is 201', function () {",
-								"    pm.response.to.have.status(201);",
-								"});",
-								"",
-								"pm.test('Response has required fields', function () {",
-								"    const jsonData = pm.response.json();",
-								"    pm.expect(jsonData).to.have.property('message');",
-								"    pm.expect(jsonData).to.have.property('access_token');",
-								"    pm.expect(jsonData).to.have.property('user');",
-								"    // HYBRID: access_token в response, refresh_token в HTTP-only cookie",
-								"});",
-									"",
-									"pm.test('User data returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.user).to.have.property('id');",
-									"    pm.expect(jsonData.user).to.have.property('email');",
-									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
-									"});",
-									"",
-								"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
-								"const jsonData = pm.response.json();",
-								"if (jsonData.access_token) {",
-								"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-								"    console.log('✅ Користувач успішно увійшов');",
-								"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
-								"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
-								"    console.log('👤 User ID:', jsonData.user?.id);",
-								"}"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Register - Duplicate Email",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"AnotherPass123!\",\n  \"name\": \"Дубль\",\n  \"surname\": \"Юзер\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "❌ **ДУБЛІКАТ EMAIL**\n\n**Логи в консолі:**\n- `Registration failed: Email already exists - yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 409 Conflict\n- Помилка про існуючий email"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 409', function () {",
-									"    pm.response.to.have.status(409);",
-									"});",
-									"",
-									"pm.test('Error message about existing email', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('існує');",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Register - Weak Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"weak.password@gmail.com\",\n  \"password\": \"123\",\n  \"name\": \"Weak\",\n  \"surname\": \"User\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "❌ **СЛАБКИЙ ПАРОЛЬ**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилки валідації паролю (IsStrongPassword)"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 400', function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test('Password validation error', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(JSON.stringify(jsonData)).to.include('пароль');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 2. PASSPORT LOGIN",
-			"item": [
-				{
-					"name": "✅ Login Success (Passport)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"SecurePass123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "✅ **СТАНДАРТНИЙ ЛОГІН З ЛОГУВАННЯМ**\n\n**Що відбувається:**\n1. ThrottlerGuard перевіряє rate limit (5/min)\n2. LocalAuthGuard активує LocalStrategy\n3. LocalStrategy перевіряє email/password\n4. AuthService генерує нові токени\n\n**Логи в консолі:**\n- `✅ User validation successful: yarko.kabay@gmail.com`\n- `✅ User logged in successfully: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Нові access_token (2h) + refresh_token (14d)\n- Rate limit headers"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-								"pm.test('Response has required fields', function () {",
-								"    const jsonData = pm.response.json();",
-								"    pm.expect(jsonData).to.have.property('message');",
-								"    pm.expect(jsonData).to.have.property('user');",
-								"    // ОБА токени тепер в HTTP-only cookies, не в response",
-								"});",
-									"",
-									"pm.test('User data returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.user).to.have.property('id');",
-									"    pm.expect(jsonData.user).to.have.property('email');",
-									"    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
-									"});",
-									"",
-								"// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
-								"const jsonData = pm.response.json();",
-								"if (jsonData.access_token) {",
-								"    pm.collectionVariables.set('access_token', jsonData.access_token);",
-								"    console.log('✅ Користувач успішно увійшов');",
-								"    console.log('🎫 Access token збережено в змінну колекції (2h)');",
-								"    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
-								"    console.log('👤 User ID:', jsonData.user?.id);",
-								"}"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Login - Wrong Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"WrongPassword123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "❌ **НЕПРАВИЛЬНИЙ ПАРОЛЬ**\n\n**Логи в консолі:**\n- `User validation failed: Invalid credentials for yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- LocalStrategy кине UnauthorizedException"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 401', function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test('Error message about invalid credentials', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('Невірний');",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Login - User Not Found",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"nonexistent@gmail.com\",\n  \"password\": \"AnyPassword123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "❌ **НЕІСНУЮЧИЙ EMAIL**\n\n**Логи в консолі:**\n- `User validation failed: Invalid credentials for nonexistent@gmail.com`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Та ж помилка що й при неправильному паролі (безпека)"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 401', function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test('Same error message as wrong password (security)', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('Невірний email або пароль');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 3. PASSWORD RESET SYSTEM 🔄",
-			"item": [
-				{
-					"name": "🔄 Refresh Access Token",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/refresh",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"refresh"
-							]
-						},
-						"description": "🔄 **HTTP-ONLY COOKIES: Оновлення access токена**\n\n**Що тестуємо:**\n- Читання refresh токена з HTTP-only cookie\n- Валідацію refresh токена в БД\n- Встановлення НОВОГО access токена в HTTP-only cookie\n- Response БЕЗ токенів в body (максимальна безпека)\n\n**Логи в консолі:**\n- `✅ Access token refreshed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Response: { message, user } (БЕЗ access_token в body!)\n- Cookie: access_token оновлюється автоматично"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response contains message (NO tokens in body)', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData.message).to.be.a('string');",
-									"    // ✅ КРИТИЧНО: НЕ має бути токенів в response body",
-									"    pm.expect(jsonData).to.not.have.property('access_token');",
-									"    pm.expect(jsonData).to.not.have.property('refresh_token');",
-									"});",
-									"",
-									"pm.test('User data returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.user).to.have.property('id');",
-									"    pm.expect(jsonData.user).to.have.property('email');",
-									"});",
-									"",
-									"// 🍪 HTTP-only cookies керуються автоматично браузером",
-									"console.log('🔄 Access token оновлено в HTTP-only cookie (автоматично)');"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "🚪 Logout User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"description": "JWT Access Token"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"logout"
-							]
-						},
-						"description": "🚪 **НОВИЙ ENDPOINT: Вихід з відкликанням токенів**\n\n**Що тестуємо:**\n- @CurrentUser декоратор замість @Request\n- JwtAuthGuard для доступу\n- Відкликання refresh токена в БД (REVOKED)\n- Access токен залишається валідним до експірації\n\n**Логи в консолі:**\n- `✅ User logged out successfully: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Refresh токен стає неактивним"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Success message returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('успішно');",
-									"});",
-									"",
-								"// 🤖 СИМУЛЯЦІЯ SDK: Очищуємо access_token з пам'яті",
-								"pm.collectionVariables.set('access_token', '');",
-								"console.log('✅ Logged out - refresh token revoked in DB');",
-								"console.log('🤖 SDK simulation: access_token cleared from memory');"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 4. JWT PROTECTED ROUTES",
-			"item": [
-				{
-					"name": "✅ Get Profile (JWT Auth)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"description": "JWT токен автоматично підставляється"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/auth/profile",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"profile"
-							]
-						},
-						"description": "✅ **ЗАХИЩЕНИЙ РОУТ + @CurrentUser декоратор**\n\n**Що тестуємо:**\n1. JwtAuthGuard активує JwtStrategy\n2. JwtStrategy витягає + валідує токен\n3. JwtStrategy завантажує user з БД\n4. @CurrentUser декоратор витягує user\n5. Controller повертає профіль\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Дані користувача без sensitive полів"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Profile data returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('id');",
-									"    pm.expect(jsonData).to.have.property('email');",
-									"    pm.expect(jsonData).to.have.property('name');",
-									"    pm.expect(jsonData).to.have.property('role');",
-									"    pm.expect(jsonData).to.have.property('balance');",
-									"});",
-									"",
-									"pm.test('No sensitive data exposed', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.not.have.property('passwordHash');",
-									"});",
-									"",
-									"pm.test('Email matches registered email', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.email).to.eql('yarko.kabay@gmail.com');",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "✅ Change Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"description": "JWT Access Token"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"current_password\": \"SecurePass123!\",\n  \"new_password\": \"NewSecurePass456!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/change-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"change-password"
-							]
-						},
-						"description": "✅ **НОВИЙ ENDPOINT: Зміна паролю**\n\n**Що тестуємо:**\n- JwtAuthGuard для авторизації\n- Перевірка поточного паролю\n- Валідація нового паролю (IsStrongPassword)\n- bcrypt хешування\n\n**Логи в консолі:**\n- `✅ Password changed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Повідомлення про успіх\n\nℹ️ **Після тесту:** Онови пароль у login запитах!"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Success message returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData.message).to.include('успішно');",
-									"});",
-									"",
-									"console.log('✅ Password changed successfully - update login requests!');"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Change Password - Wrong Current Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"description": "JWT Access Token"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"current_password\": \"WrongPassword123!\",\n  \"new_password\": \"AnyNewPass456!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/change-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"change-password"
-							]
-						},
-						"description": "❌ **НЕПРАВИЛЬНИЙ ПОТОЧНИЙ ПАРОЛЬ**\n\n**Логи в консолі:**\n- `Password change failed: Invalid current password for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилка про невірний пароль"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 400', function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test('Error message about wrong current password', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('Поточний пароль невірний');",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Profile - No Token",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/auth/profile",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"profile"
-							]
-						},
-						"description": "❌ **БЕЗ JWT ТОКЕНУ**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може знайти токен"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 401', function () {",
-									"    pm.response.to.have.status(401);",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Profile - Invalid Token",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer invalid-token-here",
-								"description": "Невалідний JWT токен"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/auth/profile",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"profile"
-							]
-						},
-						"description": "❌ **НЕВАЛІДНИЙ JWT ТОКЕН**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може розшифрувати токен"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 401', function () {",
-									"    pm.response.to.have.status(401);",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 5. FORGOT PASSWORD 📧",
-			"item": [
-				{
-					"name": "✅ Forgot Password Success",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/forgot-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"forgot-password"
-							]
-						},
-						"description": "📧 **НОВИЙ ENDPOINT: Запит на відновлення паролю**\n\n**Що тестуємо:**\n- Rate Limiting: 3 рази на 5 хвилин\n- Gmail SMTP відправка email\n- Email enumeration захист\n- Reset токен генерація\n\n**Логи в консолі:**\n- `✅ Password reset email sent successfully to: yarko.kabay@gmail.com`\n- або `Failed to send password reset email to: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK (навіть для неіснуючого email)\n- Лише message у відповіді (БЕЗ reset_token)\n- При помилці email сервісу - BadRequestException\n\n**🛡️ БЕЗПЕКА:**\n- Reset токен НІКОЛИ не повертається в API відповіді\n- Токен зберігається лише в БД і надсилається через email"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Message returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData.message).to.be.a('string');",
-									"});",
-									"",
-									"// 🛡️ Перевіряємо що reset_token НЕ повертається (безпека)",
-									"pm.test('No reset_token in response (SECURITY)', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.not.have.property('reset_token');",
-									"});",
-									"",
-									"console.log('📧 Email sent successfully - check your email: yarko.kabay@gmail.com');"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Forgot Password - Invalid Email",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"nonexistent@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/forgot-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"forgot-password"
-							]
-						},
-						"description": "🛡️ **Тест Email Enumeration Protection**\n\n**Логи в консолі:**\n- `Forgot password request for non-existent email: nonexistent@example.com`\n\n**Очікуваний результат:**\n- Status: 200 OK (НЕ 404!)\n- Однакове повідомлення (захист від email enumeration)"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200 (not 404 for security)', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Same message as valid email (security)', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('відправлено');",
-									"});",
-									"",
-									"// 🛡️ Перевіряємо що reset_token НЕ повертається (безпека)",
-									"pm.test('No reset_token in response (SECURITY)', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.not.have.property('reset_token');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 6. RESET PASSWORD 🔄",
-			"item": [
-				{
-					"name": "✅ Reset Password Success",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_FROM_EMAIL_HERE\",\n  \"new_password\": \"NewResetPassword123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/reset-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"reset-password"
-							]
-						},
-						"description": "🔄 **НОВИЙ ENDPOINT: Відновлення паролю**\n\n**Що тестуємо:**\n- Перевірка reset токена з email\n- Сувора валідація паролю (IsStrongPassword)\n- bcrypt хешування\n- Відкликання всіх refresh токенів\n- Позначення токену як використаного\n\n**Логи в консолі:**\n- `✅ Password reset successful for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Повідомлення про успіх\n\n**📧 ВАЖЛИВО:**\n- Токен треба взяти з email листа\n- Вставте токен замість PASTE_RESET_TOKEN_FROM_EMAIL_HERE\n\n⚠️ **Після тесту:** Оновіть пароль у login запитах!"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Success message returned', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('message');",
-									"    pm.expect(jsonData.message).to.include('відновлено');",
-									"});",
-									"",
-									"console.log('✅ Password reset successful - update login requests with: NewResetPassword123!');"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Reset Password - Invalid Token",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"token\": \"invalid-reset-token-here\",\n  \"new_password\": \"ValidPass123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/reset-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"reset-password"
-							]
-						},
-						"description": "❌ **НЕДІЙСНИЙ ТОКЕН**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилка про недійсний токен"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 400', function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test('Error message about invalid token', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('недійсний');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 7. SECURITY ТЕСТИ 🛡️",
-			"item": [
-				{
-					"name": "⚠️ Test Rate Limiting (6th request)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"WrongButValid123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "🛡️ **НОВИЙ ТЕСТ: ThrottlerGuard Rate Limiting**\n\n**Як тестувати:**\nВиконай цей запит 6 разів поспіль:\n- Перші 5: 401 Unauthorized (wrong password)\n- 6-й запит: 429 Too Many Requests\n\n**Що тестуємо:**\n- ThrottlerGuard на login endpoint\n- Rate limit: 5 спроб за 60 секунд\n- IP-based tracking"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Rate limiting works (401 or 429)', function () {",
-									"    pm.expect([401, 429]).to.include(pm.response.code);",
-									"});",
-									"",
-									"if (pm.response.code === 429) {",
-									"    pm.test('Rate limit message', function () {",
-									"        const jsonData = pm.response.json();",
-									"        pm.expect(jsonData.message).to.include('ThrottlerException');",
-									"    });",
-									"    console.log('🛡️ Rate limiting активний!');",
-									"}"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "🛡️ Check Security Headers (Helmet)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								""
-							]
-						},
-						"description": "🛡️ **НОВИЙ ТЕСТ: Helmet Security Headers**\n\n**Що перевіряємо:**\n- X-Content-Type-Options: nosniff\n- X-Frame-Options: DENY\n- Content-Security-Policy\n- Referrer-Policy: no-referrer\n- X-DNS-Prefetch-Control: off\n\n**Захист від:**\n- XSS атак\n- Clickjacking\n- MIME sniffing\n- Information leakage"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Helmet security headers present', function () {",
-									"    pm.expect(pm.response.headers.has('X-Content-Type-Options')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('X-Frame-Options')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('Content-Security-Policy')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('Referrer-Policy')).to.be.true;",
-									"    pm.expect(pm.response.headers.has('X-DNS-Prefetch-Control')).to.be.true;",
-									"});",
-									"",
-									"pm.test('Security header values correct', function () {",
-									"    pm.expect(pm.response.headers.get('X-Frame-Options')).to.include('DENY');",
-									"    pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.include('nosniff');",
-									"    pm.expect(pm.response.headers.get('X-DNS-Prefetch-Control')).to.include('off');",
-									"});",
-									"",
-									"console.log('🛡️ Helmet headers:');",
-									"console.log('X-Frame-Options:', pm.response.headers.get('X-Frame-Options'));",
-									"console.log('X-Content-Type-Options:', pm.response.headers.get('X-Content-Type-Options'));",
-									"console.log('Content-Security-Policy:', pm.response.headers.get('Content-Security-Policy'));"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "❌ Missing Refresh Token Cookie",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/refresh",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"refresh"
-							]
-						},
-						"description": "🔒 **HTTP-ONLY COOKIE ТЕСТ: Відсутній Refresh Token**\n\n**Що тестуємо:**\n- Відсутність HTTP-only cookie\n- Error handling для missing token\n- Security validation\n\n**Логи в консолі:**\n- `Refresh токен не знайдено в cookies`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Error: MISSING_REFRESH_TOKEN"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('Status code is 401', function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test('Error message about invalid token', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.message).to.include('недійсний');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "📁 8. EDGE CASES & SECURITY",
-			"item": [
-				{
-					"name": "🔒 Security Test - SQL Injection",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin'; DROP TABLE users; --\",\n  \"password\": \"HackAttempt123!\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "🔒 **Тест на SQL Injection**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request (DTO валідація)\n- Або 401 Unauthorized (якщо пройшла валідацію)\n- Prisma має захист від SQL Injection"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('SQL injection blocked', function () {",
-									"    // Має бути 400 (валідація) або 401 (неправильні дані)",
-									"    pm.expect([400, 401]).to.include(pm.response.code);",
-									"});",
-									"",
-									"pm.test('No server crash or 500 error', function () {",
-									"    pm.response.to.not.have.status(500);",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "🔒 Security Test - XSS in Name",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"xss.test@gmail.com\",\n  \"password\": \"ValidPass123!\",\n  \"name\": \"<script>alert('XSS')</script>\",\n  \"surname\": \"Test\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "🔒 **Тест на XSS в полі name**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- DTO валідація має заблокувати HTML теги"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"pm.test('XSS attempt blocked by validation', function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test('Validation error mentions invalid characters', function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(JSON.stringify(jsonData)).to.include('літери');",
-									"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					"// 🎯 Глобальний pre-request скрипт",
-					"console.log('🚀 Executing:', pm.request.method, pm.request.url.path.join('/'));",
-					"",
-				"// Інформація про HTTP-only cookies",
-				"console.log('🍪 ОБА токени зберігаються в HTTP-only cookies:');",
-				"console.log('  - access_token: автоматично надсилається з кожним запитом');",
-				"console.log('  - refresh_token: використовується для оновлення access токена');",
-				"console.log('🔒 Токени недоступні JavaScript коду (максимальна безпека)');"
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					"// 🎯 Глобальні тести для всіх запитів",
-					"pm.test('Response time < 2s', function () {",
-					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
-					"});",
-					"",
-					"pm.test('Content-Type is JSON (if not error)', function () {",
-					"    if (![401, 403, 429].includes(pm.response.code)) {",
-					"        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-					"    }",
-					"});",
-					"",
-					"// Логуємо результат запиту",
-					"const status = pm.response.code;",
-					"const emoji = status < 300 ? '✅' : status < 500 ? '⚠️' : '❌';",
-					"console.log(emoji + ' Response: ' + status + ' ' + pm.response.status);"
-				]
-			}
-		}
-	]
+  "info": {
+    "_postman_id": "localhost-testing-complete",
+    "name": "🔧 [LOCALHOST] Investment Platform - Complete Auth API",
+    "description": "🧪 **ЛОКАЛЬНЕ ТЕСТУВАННЯ** - повна копія продакшн колекції\n\n🔄 **HYBRID SECURITY APPROACH:**\n- 🎫 Access tokens в response body → Authorization: Bearer header (SDK контролює)\n- 🍪 Refresh tokens в HTTP-only cookies (захист від XSS)\n- 📱 SDK-friendly архітектура для сучасних SPA\n- ✅ JWT Strategy читає з Authorization header (industry standard)\n- ✅ Logout з очищенням refresh cookie\n- ✅ Rate Limiting (5 req/min)\n- ✅ @CurrentUser декоратор\n- ✅ Helmet Security Headers\n- ✅ Password Reset System з real email\n- ✅ Production logging для всіх операцій\n\n⚠️ **LOCALHOST SETUP:**\n1. PostgreSQL: `brew services start postgresql@14`\n2. Server: `npm run start:dev`\n3. Увімкни 'Send cookies automatically' в Postman!\n4. Manual налаштування Authorization: Bearer headers\n\n📧 **EMAIL TESTING:**\n- Без SENDGRID_API_KEY → Gmail SMTP (або token fallback)\n- З SENDGRID_API_KEY → SendGrid\n\n🔐 **АРХІТЕКТУРА:** Universal API для будь-яких клієнтів (web, mobile, SDK)\n\n📋 **Порядок тестування:**\n1. РЕЄСТРАЦІЯ - всі сценарії\n2. PASSPORT LOGIN - всі сценарії  \n3. PASSWORD RESET SYSTEM - refresh + logout\n4. JWT PROTECTED - всі сценарії (через Authorization header)\n5. FORGOT PASSWORD - email система\n6. RESET PASSWORD - відновлення паролю\n7. SECURITY ТЕСТИ - всі перевірки\n8. EDGE CASES - SQL injection, XSS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL сервера"
+    },
+    {
+      "key": "test_email",
+      "value": "test@localhost.dev",
+      "type": "string",
+      "description": "Test email for localhost (change as needed)"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string",
+      "description": "Access token для Authorization Bearer header (hybrid підхід)"
+    }
+  ],
+  "item": [
+    {
+      "name": "📁 1. РЕЄСТРАЦІЯ",
+      "item": [
+        {
+          "name": "✅ Register Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"name\": \"Yarko\",\n  \"surname\": \"Kabay\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "✅ **УСПІШНА РЕЄСТРАЦІЯ З ЛОГУВАННЯМ**\n\n**Що тестуємо:**\n- Валідація всіх полів\n- bcrypt хешування паролю\n- Автоматичний логін після реєстрації\n- JWT + Refresh токени\n- Збереження в БД\n\n**Логи в консолі:**\n- `✅ New user registered and logged in: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 201 Created\n- 2 токени: access (2h) + refresh (14d)\n- Дані користувача БЕЗ паролю"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    // HYBRID: access_token в response, refresh_token в HTTP-only cookie",
+                  "});",
+                  "",
+                  "pm.test('User data returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
+                  "    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
+                  "});",
+                  "",
+                  "// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "    console.log('✅ Користувач успішно увійшов');",
+                  "    console.log('🎫 Access token збережено в змінну колекції (2h)');",
+                  "    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+                  "    console.log('👤 User ID:', jsonData.user?.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Register - Duplicate Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"AnotherPass123!\",\n  \"name\": \"Дубль\",\n  \"surname\": \"Юзер\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "❌ **ДУБЛІКАТ EMAIL**\n\n**Логи в консолі:**\n- `Registration failed: Email already exists - yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 409 Conflict\n- Помилка про існуючий email"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Error message about existing email', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('існує');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Register - Weak Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"weak.password@gmail.com\",\n  \"password\": \"123\",\n  \"name\": \"Weak\",\n  \"surname\": \"User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "❌ **СЛАБКИЙ ПАРОЛЬ**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилки валідації паролю (IsStrongPassword)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Password validation error', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(JSON.stringify(jsonData)).to.include('пароль');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 2. PASSPORT LOGIN",
+      "item": [
+        {
+          "name": "✅ Login Success (Passport)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "✅ **СТАНДАРТНИЙ ЛОГІН З ЛОГУВАННЯМ**\n\n**Що відбувається:**\n1. ThrottlerGuard перевіряє rate limit (5/min)\n2. LocalAuthGuard активує LocalStrategy\n3. LocalStrategy перевіряє email/password\n4. AuthService генерує нові токени\n\n**Логи в консолі:**\n- `✅ User validation successful: yarko.kabay@gmail.com`\n- `✅ User logged in successfully: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Нові access_token (2h) + refresh_token (14d)\n- Rate limit headers"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    // ОБА токени тепер в HTTP-only cookies, не в response",
+                  "});",
+                  "",
+                  "pm.test('User data returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
+                  "    pm.expect(jsonData.user.email).to.eql('yarko.kabay@gmail.com');",
+                  "});",
+                  "",
+                  "// 🔄 HYBRID ПІДХІД: ЗБЕРІГАЄМО ACCESS TOKEN",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "    console.log('✅ Користувач успішно увійшов');",
+                  "    console.log('🎫 Access token збережено в змінну колекції (2h)');",
+                  "    console.log('🍪 Refresh token встановлено в HTTP-only cookie (14d)');",
+                  "    console.log('👤 User ID:', jsonData.user?.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Login - Wrong Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"WrongPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "❌ **НЕПРАВИЛЬНИЙ ПАРОЛЬ**\n\n**Логи в консолі:**\n- `User validation failed: Invalid credentials for yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- LocalStrategy кине UnauthorizedException"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message about invalid credentials', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('Невірний');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Login - User Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nonexistent@gmail.com\",\n  \"password\": \"AnyPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "❌ **НЕІСНУЮЧИЙ EMAIL**\n\n**Логи в консолі:**\n- `User validation failed: Invalid credentials for nonexistent@gmail.com`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Та ж помилка що й при неправильному паролі (безпека)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Same error message as wrong password (security)', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('Невірний email або пароль');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 3. PASSWORD RESET SYSTEM 🔄",
+      "item": [
+        {
+          "name": "🔄 Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "🔄 **HTTP-ONLY COOKIES: Оновлення access токена**\n\n**Що тестуємо:**\n- Читання refresh токена з HTTP-only cookie\n- Валідацію refresh токена в БД\n- Встановлення НОВОГО access токена в HTTP-only cookie\n- Response БЕЗ токенів в body (максимальна безпека)\n\n**Логи в консолі:**\n- `✅ Access token refreshed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Response: { message, user } (БЕЗ access_token в body!)\n- Cookie: access_token оновлюється автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains message (NO tokens in body)', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.be.a('string');",
+                  "    // ✅ КРИТИЧНО: НЕ має бути токенів в response body",
+                  "    pm.expect(jsonData).to.not.have.property('access_token');",
+                  "    pm.expect(jsonData).to.not.have.property('refresh_token');",
+                  "});",
+                  "",
+                  "pm.test('User data returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
+                  "});",
+                  "",
+                  "// 🍪 HTTP-only cookies керуються автоматично браузером",
+                  "console.log('🔄 Access token оновлено в HTTP-only cookie (автоматично)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🚪 Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "JWT Access Token"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "🚪 **НОВИЙ ENDPOINT: Вихід з відкликанням токенів**\n\n**Що тестуємо:**\n- @CurrentUser декоратор замість @Request\n- JwtAuthGuard для доступу\n- Відкликання refresh токена в БД (REVOKED)\n- Access токен залишається валідним до експірації\n\n**Логи в консолі:**\n- `✅ User logged out successfully: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Refresh токен стає неактивним"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Success message returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('успішно');",
+                  "});",
+                  "",
+                  "// 🤖 СИМУЛЯЦІЯ SDK: Очищуємо access_token з пам'яті",
+                  "pm.collectionVariables.set('access_token', '');",
+                  "console.log('✅ Logged out - refresh token revoked in DB');",
+                  "console.log('🤖 SDK simulation: access_token cleared from memory');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 4. JWT PROTECTED ROUTES",
+      "item": [
+        {
+          "name": "✅ Get Profile (JWT Auth)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "JWT токен автоматично підставляється"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "✅ **ЗАХИЩЕНИЙ РОУТ + @CurrentUser декоратор**\n\n**Що тестуємо:**\n1. JwtAuthGuard активує JwtStrategy\n2. JwtStrategy витягає + валідує токен\n3. JwtStrategy завантажує user з БД\n4. @CurrentUser декоратор витягує user\n5. Controller повертає профіль\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Дані користувача без sensitive полів"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Profile data returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('role');",
+                  "    pm.expect(jsonData).to.have.property('balance');",
+                  "});",
+                  "",
+                  "pm.test('No sensitive data exposed', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.not.have.property('passwordHash');",
+                  "});",
+                  "",
+                  "pm.test('Email matches registered email', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.email).to.eql('yarko.kabay@gmail.com');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "JWT Access Token"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"SecurePass123!\",\n  \"new_password\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "✅ **НОВИЙ ENDPOINT: Зміна паролю**\n\n**Що тестуємо:**\n- JwtAuthGuard для авторизації\n- Перевірка поточного паролю\n- Валідація нового паролю (IsStrongPassword)\n- bcrypt хешування\n\n**Логи в консолі:**\n- `✅ Password changed successfully for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Повідомлення про успіх\n\nℹ️ **Після тесту:** Онови пароль у login запитах!"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Success message returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('успішно');",
+                  "});",
+                  "",
+                  "console.log('✅ Password changed successfully - update login requests!');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Change Password - Wrong Current Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "JWT Access Token"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"WrongPassword123!\",\n  \"new_password\": \"AnyNewPass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "❌ **НЕПРАВИЛЬНИЙ ПОТОЧНИЙ ПАРОЛЬ**\n\n**Логи в консолі:**\n- `Password change failed: Invalid current password for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилка про невірний пароль"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message about wrong current password', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('Поточний пароль невірний');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Profile - No Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "❌ **БЕЗ JWT ТОКЕНУ**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може знайти токен"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Profile - Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token-here",
+                "description": "Невалідний JWT токен"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "❌ **НЕВАЛІДНИЙ JWT ТОКЕН**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- JwtStrategy не може розшифрувати токен"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 5. FORGOT PASSWORD 📧",
+      "item": [
+        {
+          "name": "✅ Forgot Password Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "📧 **НОВИЙ ENDPOINT: Запит на відновлення паролю**\n\n**Що тестуємо:**\n- Rate Limiting: 3 рази на 5 хвилин\n- Gmail SMTP відправка email\n- Email enumeration захист\n- Reset токен генерація\n\n**Логи в консолі:**\n- `✅ Password reset email sent successfully to: yarko.kabay@gmail.com`\n- або `Failed to send password reset email to: yarko.kabay@gmail.com`\n\n**Очікуваний результат:**\n- Status: 200 OK (навіть для неіснуючого email)\n- Лише message у відповіді (БЕЗ reset_token)\n- При помилці email сервісу - BadRequestException\n\n**🛡️ БЕЗПЕКА:**\n- Reset токен НІКОЛИ не повертається в API відповіді\n- Токен зберігається лише в БД і надсилається через email"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Message returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.be.a('string');",
+                  "});",
+                  "",
+                  "// 🛡️ Перевіряємо що reset_token НЕ повертається (безпека)",
+                  "pm.test('No reset_token in response (SECURITY)', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.not.have.property('reset_token');",
+                  "});",
+                  "",
+                  "console.log('📧 Email sent successfully - check your email: yarko.kabay@gmail.com');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Forgot Password - Invalid Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nonexistent@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "🛡️ **Тест Email Enumeration Protection**\n\n**Логи в консолі:**\n- `Forgot password request for non-existent email: nonexistent@example.com`\n\n**Очікуваний результат:**\n- Status: 200 OK (НЕ 404!)\n- Однакове повідомлення (захист від email enumeration)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 (not 404 for security)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Same message as valid email (security)', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('відправлено');",
+                  "});",
+                  "",
+                  "// 🛡️ Перевіряємо що reset_token НЕ повертається (безпека)",
+                  "pm.test('No reset_token in response (SECURITY)', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.not.have.property('reset_token');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 6. RESET PASSWORD 🔄",
+      "item": [
+        {
+          "name": "✅ Reset Password Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_FROM_EMAIL_HERE\",\n  \"new_password\": \"NewResetPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "🔄 **НОВИЙ ENDPOINT: Відновлення паролю**\n\n**Що тестуємо:**\n- Перевірка reset токена з email\n- Сувора валідація паролю (IsStrongPassword)\n- bcrypt хешування\n- Відкликання всіх refresh токенів\n- Позначення токену як використаного\n\n**Логи в консолі:**\n- `✅ Password reset successful for user ID: 1`\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Повідомлення про успіх\n\n**📧 ВАЖЛИВО:**\n- Токен треба взяти з email листа\n- Вставте токен замість PASTE_RESET_TOKEN_FROM_EMAIL_HERE\n\n⚠️ **Після тесту:** Оновіть пароль у login запитах!"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Success message returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('відновлено');",
+                  "});",
+                  "",
+                  "console.log('✅ Password reset successful - update login requests with: NewResetPassword123!');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Reset Password - Invalid Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invalid-reset-token-here\",\n  \"new_password\": \"ValidPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "❌ **НЕДІЙСНИЙ ТОКЕН**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- Помилка про недійсний токен"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message about invalid token', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('недійсний');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 7. SECURITY ТЕСТИ 🛡️",
+      "item": [
+        {
+          "name": "⚠️ Test Rate Limiting (6th request)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"WrongButValid123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "🛡️ **НОВИЙ ТЕСТ: ThrottlerGuard Rate Limiting**\n\n**Як тестувати:**\nВиконай цей запит 6 разів поспіль:\n- Перші 5: 401 Unauthorized (wrong password)\n- 6-й запит: 429 Too Many Requests\n\n**Що тестуємо:**\n- ThrottlerGuard на login endpoint\n- Rate limit: 5 спроб за 60 секунд\n- IP-based tracking"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rate limiting works (401 or 429)', function () {",
+                  "    pm.expect([401, 429]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 429) {",
+                  "    pm.test('Rate limit message', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.message).to.include('ThrottlerException');",
+                  "    });",
+                  "    console.log('🛡️ Rate limiting активний!');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🛡️ Check Security Headers (Helmet)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "🛡️ **НОВИЙ ТЕСТ: Helmet Security Headers**\n\n**Що перевіряємо:**\n- X-Content-Type-Options: nosniff\n- X-Frame-Options: DENY\n- Content-Security-Policy\n- Referrer-Policy: no-referrer\n- X-DNS-Prefetch-Control: off\n\n**Захист від:**\n- XSS атак\n- Clickjacking\n- MIME sniffing\n- Information leakage"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Helmet security headers present', function () {",
+                  "    pm.expect(pm.response.headers.has('X-Content-Type-Options')).to.be.true;",
+                  "    pm.expect(pm.response.headers.has('X-Frame-Options')).to.be.true;",
+                  "    pm.expect(pm.response.headers.has('Content-Security-Policy')).to.be.true;",
+                  "    pm.expect(pm.response.headers.has('Referrer-Policy')).to.be.true;",
+                  "    pm.expect(pm.response.headers.has('X-DNS-Prefetch-Control')).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Security header values correct', function () {",
+                  "    pm.expect(pm.response.headers.get('X-Frame-Options')).to.include('DENY');",
+                  "    pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.include('nosniff');",
+                  "    pm.expect(pm.response.headers.get('X-DNS-Prefetch-Control')).to.include('off');",
+                  "});",
+                  "",
+                  "console.log('🛡️ Helmet headers:');",
+                  "console.log('X-Frame-Options:', pm.response.headers.get('X-Frame-Options'));",
+                  "console.log('X-Content-Type-Options:', pm.response.headers.get('X-Content-Type-Options'));",
+                  "console.log('Content-Security-Policy:', pm.response.headers.get('Content-Security-Policy'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Missing Refresh Token Cookie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "🔒 **HTTP-ONLY COOKIE ТЕСТ: Відсутній Refresh Token**\n\n**Що тестуємо:**\n- Відсутність HTTP-only cookie\n- Error handling для missing token\n- Security validation\n\n**Логи в консолі:**\n- `Refresh токен не знайдено в cookies`\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized\n- Error: MISSING_REFRESH_TOKEN"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message about invalid token', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('недійсний');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 8. EDGE CASES & SECURITY",
+      "item": [
+        {
+          "name": "🔒 Security Test - SQL Injection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin'; DROP TABLE users; --\",\n  \"password\": \"HackAttempt123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "🔒 **Тест на SQL Injection**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request (DTO валідація)\n- Або 401 Unauthorized (якщо пройшла валідацію)\n- Prisma має захист від SQL Injection"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('SQL injection blocked', function () {",
+                  "    // Має бути 400 (валідація) або 401 (неправильні дані)",
+                  "    pm.expect([400, 401]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('No server crash or 500 error', function () {",
+                  "    pm.response.to.not.have.status(500);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 Security Test - XSS in Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"xss.test@gmail.com\",\n  \"password\": \"ValidPass123!\",\n  \"name\": \"<script>alert('XSS')</script>\",\n  \"surname\": \"Test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "🔒 **Тест на XSS в полі name**\n\n**Очікуваний результат:**\n- Status: 400 Bad Request\n- DTO валідація має заблокувати HTML теги"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('XSS attempt blocked by validation', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error mentions invalid characters', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(JSON.stringify(jsonData)).to.include('літери');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 9. USERS 👤",
+      "item": [
+        {
+          "name": "✅ Update Profile Success",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Yarko\",\n  \"surname\": \"Kabay\",\n  \"phone\": \"+380555555555\",\n  \"email\": \"yarko@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            },
+            "description": "✅ **ОНОВЛЕННЯ ПРОФІЛЮ КОРИСТУВАЧА**\n\n**Що тестуємо:**\n- JwtAuthGuard перевірка токена\n- Валідація полів (name, surname, phone, email)\n- Перевірка унікальності email\n- Повернення оновлених даних без passwordHash\n\n**Очікуваний результат:**\n- Status: 200 OK\n- Оновлені дані користувача"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has updated user fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('surname');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.not.have.property('passwordHash');",
+                  "});",
+                  "",
+                  "pm.test('No sensitive data exposed', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.not.have.property('passwordHash');",
+                  "});",
+                  "",
+                  "console.log('✅ Profile updated successfully');",
+                  "console.log('👤 Updated user:', pm.response.json()?.email);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Update Profile - Unauthorized",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            },
+            "description": "❌ **БЕЗ JWT ТОКЕНУ**\n\n**Очікуваний результат:**\n- Status: 401 Unauthorized"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Update Profile - Duplicate Email",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user2@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            },
+            "description": "❌ **EMAIL ВЖЕ ВИКОРИСТОВУЄТЬСЯ ІНШИМ ЮЗЕРОМ**\n\n⚠️ **Підготовка:**\n1. Зареєструй другого юзера (наприклад user2@example.com)\n2. Залогінься першим юзером\n3. Спробуй змінити email на user2@example.com\n\n**Очікуваний результат:**\n- Status: 409 Conflict\n- message: Цей email вже використовується"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 10. PROJECTS 🏗️",
+      "item": [
+        {
+          "name": "✅ Get All Projects (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            },
+            "description": "✅ **СПИСОК ВСІХ ПРОЕКТІВ (Admin only)**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив проектів з marketingCard"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "const projects = pm.response.json();",
+                  "if (projects.length > 0) pm.collectionVariables.set('project_id', projects[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Get Project By Id (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
+            },
+            "description": "✅ **ДЕТАЛІ ПРОЕКТУ (Admin only)**\n\nОчікуваний результат:\n- Status: 200 OK\n- Об'єкт проекту з marketingCard"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has required fields', () => {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p).to.have.property('id');",
+                  "    pm.expect(p).to.have.property('title');",
+                  "    pm.expect(p).to.have.property('profitPercentage');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Create Project (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Project\",\n  \"description\": \"Test description\",\n  \"targetAmount\": 100000,\n  \"profitPercentage\": 15\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            },
+            "description": "✅ **СТВОРЕННЯ ПРОЕКТУ (Admin only)**\n\nОчікуваний результат:\n- Status: 201 Created\n- Новий проект"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Project created', () => {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p).to.have.property('id');",
+                  "    pm.expect(p.title).to.eql('Test Project');",
+                  "});",
+                  "pm.collectionVariables.set('project_id', pm.response.json().id);",
+                  "console.log('✅ Project created, id:', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Update Project (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Project\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
+            },
+            "description": "✅ **ОНОВЛЕННЯ ПРОЕКТУ (Admin only)**\n\nОчікуваний результат:\n- Status: 200 OK\n- Оновлений проект"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Project updated', () => {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.title).to.eql('Updated Project');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Delete Project (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
+            },
+            "description": "✅ **ВИДАЛЕННЯ ПРОЕКТУ (Admin only)**\n\nОчікуваний результат:\n- Status: 204 No Content"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Create Project - Unauthorized (No Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Hack\",\n  \"targetAmount\": 1000,\n  \"profitPercentage\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            },
+            "description": "❌ **БЕЗ ТОКЕНА**\n\nОчікуваний результат:\n- Status: 401 Unauthorized"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Create Project - Forbidden (Not Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Hack\",\n  \"targetAmount\": 1000,\n  \"profitPercentage\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            },
+            "description": "❌ **ЮЗЕР БЕЗ ПРАВ АДМІНА**\n\n⚠️ Потрібно встановити user_token — токен звичайного юзера (role: USER)\n\nОчікуваний результат:\n- Status: 403 Forbidden"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 11. MARKETING CARDS 🎯",
+      "item": [
+        {
+          "name": "✅ Get All Marketing Cards (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "✅ **ПУБЛІЧНИЙ СПИСОК МАРКЕТИНГОВИХ КАРТОК**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив карток"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Create Marketing Card (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"title\": \"Test Card\",\n  \"content\": \"Test content\",\n  \"imageUrls\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "✅ **СТВОРЕННЯ КАРТКИ (Admin)**\n\n⚠️ Потрібен project_id зі змінних\n\nОчікуваний результат:\n- Status: 201 Created"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('marketing_card_id', pm.response.json().id);",
+                  "console.log('✅ Card created, id:', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Update Marketing Card (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Card\",\n  \"content\": \"Updated content\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards/{{marketing_card_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards",
+                "{{marketing_card_id}}"
+              ]
+            },
+            "description": "✅ **ОНОВЛЕННЯ КАРТКИ (Admin)**\n\nОчікуваний результат:\n- Status: 200 OK"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Title updated', () => pm.expect(pm.response.json().title).to.eql('Updated Card'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Create Duplicate Card (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"title\": \"Duplicate\",\n  \"content\": \"Duplicate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/marketing-cards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards"
+              ]
+            },
+            "description": "❌ **ПРОЕКТ ВЖЕ МАЄ КАРТКУ**\n\nОчікуваний результат:\n- Status: 409 Conflict"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Delete Marketing Card (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/marketing-cards/{{marketing_card_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "marketing-cards",
+                "{{marketing_card_id}}"
+              ]
+            },
+            "description": "✅ **ВИДАЛЕННЯ КАРТКИ (Admin)**\n\nОчікуваний результат:\n- Status: 204 No Content"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 12. USER PROJECTS 👥",
+      "item": [
+        {
+          "name": "✅ Get My Projects (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "✅ **ПРОЕКТИ ПОТОЧНОГО ЮЗЕРА**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив UserProject з деталями проекту"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Add User To Project (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"projectId\": \"{{project_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "✅ **ДОДАТИ ЮЗЕРА В ПРОЕКТ (Admin)**\n\n⚠️ Вкажи реальний userId\n\nОчікуваний результат:\n- Status: 201 Created"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('user_project_id', pm.response.json().id);",
+                  "console.log('✅ UserProject created, id:', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Get My Project By Id (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects/{{user_project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects",
+                "{{user_project_id}}"
+              ]
+            },
+            "description": "✅ **ДЕТАЛІ ОДНОГО USER PROJECT**\n\nОчікуваний результат:\n- Status: 200 OK"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Add Duplicate User To Project (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"projectId\": \"{{project_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects"
+              ]
+            },
+            "description": "❌ **ЮЗЕР ВЖЕ В ПРОЕКТІ**\n\nОчікуваний результат:\n- Status: 409 Conflict"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Remove User From Project (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-projects/{{user_project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-projects",
+                "{{user_project_id}}"
+              ]
+            },
+            "description": "✅ **ВИДАЛИТИ ЮЗЕРА З ПРОЕКТУ (Admin)**\n\nОчікуваний результат:\n- Status: 204 No Content"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 13. INVESTMENTS 💰",
+      "item": [
+        {
+          "name": "GET /investments/my - Мої інвестиції (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/my",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "my"]
+            },
+            "description": "✅ **МОЇ ІНВЕСТИЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- Array інвестицій поточного юзера"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/admin - Всі інвестиції (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/admin",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "admin"]
+            },
+            "description": "✅ **ВСІ ІНВЕСТИЦІЇ (Admin/Manager)**\n\nОчікуваний результат:\n- Status: 200\n- Array всіх інвестицій"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/admin?userProjectId=1 - Фільтр по UserProject",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/admin?userProjectId=1",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "admin"],
+              "query": [{ "key": "userProjectId", "value": "1" }]
+            },
+            "description": "✅ **ФІЛЬТР ІНВЕСТИЦІЙ ПО USER PROJECT (Admin)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /investments/:id - Одна інвестиція",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/1",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "1"]
+            },
+            "description": "✅ **ОДНА ІНВЕСТИЦІЯ**\n\nЮзер бачить тільки власні, Admin бачить будь-яку"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 403', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /investments - Створити інвестицію (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userProjectId\": 1,\n  \"startCapital\": 10000,\n  \"currentCapital\": 11500,\n  \"hasIncome\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments",
+              "host": ["{{base_url}}"],
+              "path": ["investments"]
+            },
+            "description": "✅ **СТВОРИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nprofitPercentage та capitalization розраховуються автоматично:\n- profitPercentage = ((11500-10000)/10000)*100 = 15%\n- capitalization = 11500-10000 = 1500\n\nТакож автоматично оновлюється UserProject.totalInvested"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('profitPercentage calculated automatically', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('profitPercentage');",
+                  "    pm.expect(body.profitPercentage).to.equal(15);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('investment_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /investments/:id - Оновити капітали (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentCapital\": 12000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}"]
+            },
+            "description": "✅ **ОНОВИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nОновлення currentCapital — profitPercentage та capitalization перераховуються автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('profitPercentage recalculated', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.profitPercentage).to.equal(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /investments/:id/status - Змінити статус (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAUSED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}", "status"]
+            },
+            "description": "✅ **ЗМІНИТИ СТАТУС ІНВЕСТИЦІЇ**\n\nДопустимі значення: ACTIVE, SOLD, PAUSED\n\nПри SOLD/PAUSED — виключається з розрахунку UserProject.totalInvested"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status updated', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.equal('PAUSED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /investments/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/investments/{{investment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["investments", "{{investment_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ІНВЕСТИЦІЮ (Admin)**\n\nПісля видалення UserProject.totalInvested перераховується автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /investments - 403 Forbidden (User role)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userProjectId\": 1,\n  \"startCapital\": 5000,\n  \"currentCapital\": 5500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investments",
+              "host": ["{{base_url}}"],
+              "path": ["investments"]
+            },
+            "description": "❌ **ЗАБЛОКОВАНО ДЛЯ USER РОЛІ**\n\nОчікуваний результат: 403 Forbidden"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 14. TRANSACTIONS 💳",
+      "item": [
+        {
+          "name": "GET /transactions/my - Мої транзакції (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/my?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "my"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has pagination meta', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.have.property('meta');",
+                  "    pm.expect(body.meta).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /transactions/admin - Всі транзакції (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/admin?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "admin"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "✅ **ВСІ ТРАНЗАКЦІЇ (Admin/Manager)**\n\nОчікуваний результат: 200 + paginated list"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - DEPOSIT (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"DEPOSIT\",\n  \"amount\": 5000,\n  \"paymentMethod\": \"bank_transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "✅ **ПОПОВНЕННЯ БАЛАНСУ (Admin)**\n\nDEPOSIT → балансBefore + amount = balanceAfter\nUser.balance оновлюється автоматично"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('balanceBefore and balanceAfter present', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('balanceBefore');",
+                  "    pm.expect(body).to.have.property('balanceAfter');",
+                  "    pm.expect(body.balanceAfter).to.be.above(body.balanceBefore);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('transaction_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - WITHDRAWAL (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"WITHDRAWAL\",\n  \"amount\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "✅ **ВИВЕДЕННЯ КОШТІВ (Admin)**\n\nWITHDRAWAL → balance зменшується\nЯкщо balance < amount → 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 400', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /transactions - 400 Insufficient balance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"WITHDRAWAL\",\n  \"amount\": 9999999\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "❌ **НЕДОСТАТНЬО КОШТІВ**\n\nОчікуваний результат: 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /transactions/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "{{transaction_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ТРАНЗАКЦІЮ (Admin)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 15. DIVIDENDS 🏦",
+      "item": [
+        {
+          "name": "GET /dividends/my - Мої дивіденди (User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/my",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "my"]
+            },
+            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is array', () => {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /dividends/admin - Всі дивіденди (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/admin",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "admin"]
+            },
+            "description": "✅ **ВСІ ДИВІДЕНДИ (Admin/Manager)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /dividends - Нарахувати дивіденд (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investmentId\": 1,\n  \"userId\": 1,\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends",
+              "host": ["{{base_url}}"],
+              "path": ["dividends"]
+            },
+            "description": "✅ **НАРАХУВАТИ ДИВІДЕНД (Admin/Manager)**\n\nСтатус PENDING за замовчуванням.\nВиплата відбувається через PATCH /dividends/:id/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status is PENDING by default', () => {",
+                  "    pm.expect(pm.response.json().status).to.equal('PENDING');",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('dividend_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - Виплатити (PAID)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "✅ **ВИПЛАТИТИ ДИВІДЕНД (Admin/Manager)**\n\nPAID → зараховує суму на баланс юзера + автоматично створює Transaction типу DIVIDEND_PAYMENT"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Dividend status is PAID', () => {",
+                  "    pm.expect(pm.response.json().status).to.equal('PAID');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - 400 Already PAID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "❌ **ПОВТОРНА ВИПЛАТА ЗАБЛОКОВАНА**\n\nОчікуваний результат: 400 Bad Request"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /dividends/:id/status - CANCELLED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}", "status"]
+            },
+            "description": "✅ **СКАСУВАТИ ДИВІДЕНД (Admin/Manager)**"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /dividends/:id - Видалити (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dividends/{{dividend_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{dividend_id}}"]
+            },
+            "description": "✅ **ВИДАЛИТИ ДИВІДЕНД (Admin)**\n\nВидалення заблоковано для PAID дивідендів → 400"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 400', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📁 16. DASHBOARD 📊",
+      "item": [
+        {
+          "name": "GET /dashboard - Агреговані дані юзера",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "✅ **ДАШБОРД ЮЗЕРА**\n\nПовертає агреговані дані для 3 карточок:\n- totalInvested — загальна сума початкових капіталів по активних інвестиціях\n- capitalization — поточний приріст (currentCapital - startCapital)\n- totalDividends — сума виплачених дивідендів"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Dashboard has required fields', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('totalInvested');",
+                  "    pm.expect(body).to.have.property('capitalization');",
+                  "    pm.expect(body).to.have.property('totalDividends');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /dashboard - 401 Unauthorized",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "❌ **БЕЗ ТОКЕНА — ЗАБЛОКОВАНО**\n\nОчікуваний результат: 401 Unauthorized"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// 🎯 Глобальний pre-request скрипт",
+          "console.log('🚀 Executing:', pm.request.method, pm.request.url.path.join('/'));",
+          "",
+          "// Інформація про HTTP-only cookies",
+          "console.log('🍪 ОБА токени зберігаються в HTTP-only cookies:');",
+          "console.log('  - access_token: автоматично надсилається з кожним запитом');",
+          "console.log('  - refresh_token: використовується для оновлення access токена');",
+          "console.log('🔒 Токени недоступні JavaScript коду (максимальна безпека)');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// 🎯 Глобальні тести для всіх запитів",
+          "pm.test('Response time < 2s', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test('Content-Type is JSON (if not error)', function () {",
+          "    if (![401, 403, 429].includes(pm.response.code)) {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    }",
+          "});",
+          "",
+          "// Логуємо результат запиту",
+          "const status = pm.response.code;",
+          "const emoji = status < 300 ? '✅' : status < 500 ? '⚠️' : '❌';",
+          "console.log(emoji + ' Response: ' + status + ' ' + pm.response.status);"
+        ]
+      }
+    }
+  ]
 }
