@@ -8,19 +8,22 @@ import { CreateInvestmentDto } from './dto/create-investment.dto';
 import { UpdateInvestmentDto } from './dto/update-investment.dto';
 import { UserRole, InvestmentStatus } from '../../../generated/prisma';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
+import {
+  calcProfitPercentage,
+  calcCapitalization,
+  calcTotalCapitalization,
+  calcAverageProfitPercentage,
+} from '@projectua/project-core';
 
 @Injectable()
 export class InvestmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Авто-розрахунок profitPercentage і capitalization на основі капіталів
   private calculateFields(startCapital: number, currentCapital: number) {
-    const profitPercentage =
-      startCapital > 0
-        ? ((currentCapital - startCapital) / startCapital) * 100
-        : 0;
-    const capitalization = currentCapital - startCapital;
-    return { profitPercentage, capitalization };
+    return {
+      profitPercentage: calcProfitPercentage(startCapital, currentCapital),
+      capitalization: calcCapitalization(startCapital, currentCapital),
+    };
   }
 
   // Admin: всі інвестиції або фільтр по userProjectId
@@ -201,13 +204,9 @@ export class InvestmentsService {
       (sum, inv) => sum + inv.startCapital,
       0,
     );
-    const totalCurrent = investments.reduce(
-      (sum, inv) => sum + inv.currentCapital,
-      0,
-    );
-    const capitalization = totalCurrent - totalInvested;
+    const capitalization = calcTotalCapitalization(investments);
     const profitPercentage =
-      totalInvested > 0 ? (capitalization / totalInvested) * 100 : 0;
+      investments.length > 0 ? calcAverageProfitPercentage(investments) : 0;
 
     await this.prisma.userProject.update({
       where: { id: userProjectId },
