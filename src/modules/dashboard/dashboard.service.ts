@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InvestmentStatus, DividendStatus } from '../../../generated/prisma';
+import {
+  INVESTMENT_STATUS,
+  DIVIDEND_STATUS,
+  calcTotalCapitalization,
+} from '@projectua/project-core';
 
 @Injectable()
 export class DashboardService {
@@ -14,33 +19,24 @@ export class DashboardService {
         where: { userId },
         include: {
           investments: {
-            where: { status: InvestmentStatus.ACTIVE },
+            where: { status: INVESTMENT_STATUS.ACTIVE as InvestmentStatus },
           },
         },
       }),
       // Виплачені дивіденди юзера
       this.prisma.dividend.findMany({
-        where: { userId, status: DividendStatus.PAID },
+        where: { userId, status: DIVIDEND_STATUS.PAID as DividendStatus },
       }),
     ]);
 
-    // Сума всіх початкових капіталів по активних інвестиціях
-    const totalInvested = userProjects.reduce((sum, up) => {
-      return (
-        sum +
-        up.investments.reduce((invSum, inv) => invSum + inv.startCapital, 0)
-      );
-    }, 0);
+    const allInvestments = userProjects.flatMap((up) => up.investments);
 
-    // Поточна капіталізація = поточний капітал - початковий
-    const totalCurrentCapital = userProjects.reduce((sum, up) => {
-      return (
-        sum +
-        up.investments.reduce((invSum, inv) => invSum + inv.currentCapital, 0)
-      );
-    }, 0);
+    const totalInvested = allInvestments.reduce(
+      (sum, inv) => sum + inv.startCapital,
+      0,
+    );
 
-    const capitalization = totalCurrentCapital - totalInvested;
+    const capitalization = calcTotalCapitalization(allInvestments);
 
     // Загальна сума виплачених дивідендів
     const totalDividends = dividends.reduce((sum, d) => sum + d.amount, 0);

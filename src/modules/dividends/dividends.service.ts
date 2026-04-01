@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDividendDto } from './dto/create-dividend.dto';
 import { DividendStatus, TransactionType } from '../../../generated/prisma';
+import { DIVIDEND_STATUS } from '@projectua/project-core';
 
 @Injectable()
 export class DividendsService {
@@ -100,15 +101,15 @@ export class DividendsService {
       throw new NotFoundException(`Дивіденд #${id} не знайдено`);
     }
 
-    if (dividend.status === DividendStatus.PAID) {
+    if (dividend.status === DIVIDEND_STATUS.PAID) {
       throw new BadRequestException('Цей дивіденд вже виплачено');
     }
 
-    if (dividend.status === DividendStatus.CANCELLED) {
+    if (dividend.status === DIVIDEND_STATUS.CANCELLED) {
       throw new BadRequestException('Скасований дивіденд не можна виплатити');
     }
 
-    if (status === DividendStatus.PAID) {
+    if (status === DIVIDEND_STATUS.PAID) {
       const balanceBefore = dividend.user.balance;
       const balanceAfter = balanceBefore + dividend.amount;
 
@@ -122,7 +123,7 @@ export class DividendsService {
       await this.prisma.$transaction(async (tx) => {
         await tx.dividend.update({
           where: { id },
-          data: { status: DividendStatus.PAID },
+          data: { status: DIVIDEND_STATUS.PAID as DividendStatus },
         });
 
         await tx.user.update({
@@ -168,7 +169,7 @@ export class DividendsService {
       throw new NotFoundException(`Дивіденд #${id} не знайдено`);
     }
 
-    if (dividend.status === DividendStatus.PAID) {
+    if (dividend.status === DIVIDEND_STATUS.PAID) {
       throw new BadRequestException(
         'Не можна видалити виплачений дивіденд. Спочатку скасуйте виплату',
       );
