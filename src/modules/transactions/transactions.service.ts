@@ -5,7 +5,13 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { TransactionType } from '../../../generated/prisma';
+
+import {
+  DEBIT_TRANSACTION_TYPES,
+  CREDIT_TRANSACTION_TYPES,
+  hasSufficientBalance,
+  type TransactionType as CoreTransactionType,
+} from '@projectua/project-core';
 
 @Injectable()
 export class TransactionsService {
@@ -84,19 +90,9 @@ export class TransactionsService {
       throw new NotFoundException(`Користувача #${dto.userId} не знайдено`);
     }
 
-    const debitTypes: TransactionType[] = [
-      TransactionType.WITHDRAWAL,
-      TransactionType.INVESTMENT_PURCHASE,
-      TransactionType.FEE_CHARGE,
-    ];
-    const creditTypes: TransactionType[] = [
-      TransactionType.DEPOSIT,
-      TransactionType.INVESTMENT_SALE,
-      TransactionType.REFUND_ISSUED,
-    ];
+    const coreType = dto.type as unknown as CoreTransactionType;
 
-    // Перевіряємо достатність балансу для списань
-    if (debitTypes.includes(dto.type) && user.balance < dto.amount) {
+    if (!hasSufficientBalance(user.balance, dto.amount, coreType)) {
       throw new BadRequestException(
         'Недостатньо коштів на балансі для цієї операції',
       );
@@ -105,10 +101,9 @@ export class TransactionsService {
     const balanceBefore = user.balance;
     let balanceAfter = user.balance;
 
-    // Розраховуємо новий баланс залежно від типу транзакції
-    if (creditTypes.includes(dto.type)) {
+    if (CREDIT_TRANSACTION_TYPES.includes(coreType)) {
       balanceAfter = user.balance + dto.amount;
-    } else if (debitTypes.includes(dto.type)) {
+    } else if (DEBIT_TRANSACTION_TYPES.includes(coreType)) {
       balanceAfter = user.balance - dto.amount;
     }
     // DIVIDEND_PAYMENT — баланс оновлюється через DividendsService
