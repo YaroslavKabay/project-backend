@@ -1,6 +1,9 @@
 import { Controller, Put, Get, Body, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { TransactionsService } from '../transactions/transactions.service';
+import { DividendsService } from '../dividends/dividends.service';
+import { InvestmentsService } from '../investments/investments.service';
+import { UserProjectsService } from '../user-projects/user-projects.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -12,6 +15,9 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly transactionsService: TransactionsService,
+    private readonly dividendsService: DividendsService,
+    private readonly investmentsService: InvestmentsService,
+    private readonly userProjectsService: UserProjectsService,
   ) {}
 
   @Get('me/transactions')
@@ -25,6 +31,21 @@ export class UsersController {
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );
+  }
+
+  @Get('me/dividends')
+  getMyDividends(@CurrentUser() user: AuthenticatedUser) {
+    return this.dividendsService.findAllForUser(user.id);
+  }
+
+  @Get('me/investments')
+  getMyInvestments(@CurrentUser() user: AuthenticatedUser) {
+    return this.investmentsService.findAllForUser(user.id);
+  }
+
+  @Get('me/projects')
+  getMyProjects(@CurrentUser() user: AuthenticatedUser) {
+    return this.userProjectsService.findAllByUser(user.id);
   }
 
   @Put('profile')

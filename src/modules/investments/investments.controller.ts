@@ -35,12 +35,6 @@ export class InvestmentsController {
     return this.investmentsService.findAll(id);
   }
 
-  // User: власні інвестиції
-  @Get('my')
-  findMy(@CurrentUser() user: AuthenticatedUser) {
-    return this.investmentsService.findAllForUser(user.id);
-  }
-
   // Admin або власник
   @Get(':id')
   findOne(

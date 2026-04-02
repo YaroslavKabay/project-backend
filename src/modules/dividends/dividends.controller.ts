@@ -15,9 +15,7 @@ import { CreateDividendDto } from './dto/create-dividend.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole, DividendStatus } from '../../../generated/prisma';
-import type { AuthenticatedUser } from '../auth/types/auth.types';
 
 @UseGuards(JwtAuthGuard)
 @Controller('dividends')
@@ -36,12 +34,6 @@ export class DividendsController {
       userId ? parseInt(userId, 10) : undefined,
       investmentId ? parseInt(investmentId, 10) : undefined,
     );
-  }
-
-  // User: власні дивіденди
-  @Get('my')
-  findMy(@CurrentUser() user: AuthenticatedUser) {
-    return this.dividendsService.findAllForUser(user.id);
   }
 
   // Admin: одиничний дивіденд
