@@ -1814,7 +1814,7 @@
       "name": "📁 12. USER PROJECTS 👥",
       "item": [
         {
-          "name": "✅ Get My Projects (User)",
+          "name": "✅ GET /users/me/projects - Мої проекти (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -1824,7 +1824,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/user-projects",
+              "raw": "{{base_url}}/users/me/projects",
               "host": [
                 "{{base_url}}"
               ],
@@ -2010,7 +2010,7 @@
       "name": "📁 13. INVESTMENTS 💰",
       "item": [
         {
-          "name": "GET /investments/my - Мої інвестиції (User)",
+          "name": "GET /users/me/investments - Мої інвестиції (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2020,7 +2020,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/investments/my",
+              "raw": "{{base_url}}/users/me/investments",
               "host": [
                 "{{base_url}}"
               ],
@@ -2393,7 +2393,7 @@
       "name": "📁 14. TRANSACTIONS 💳",
       "item": [
         {
-          "name": "GET /transactions/my - Мої транзакції (User)",
+          "name": "GET /users/me/transactions - Мої транзакції (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2403,7 +2403,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/transactions/my?page=1&limit=20",
+              "raw": "{{base_url}}/users/me/transactions?page=1&limit=20",
               "host": [
                 "{{base_url}}"
               ],
@@ -2666,7 +2666,7 @@
       "name": "📁 15. DIVIDENDS 🏦",
       "item": [
         {
-          "name": "GET /dividends/my - Мої дивіденди (User)",
+          "name": "GET /users/me/dividends - Мої дивіденди (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2676,7 +2676,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/dividends/my",
+              "raw": "{{base_url}}/users/me/dividends",
               "host": [
                 "{{base_url}}"
               ],

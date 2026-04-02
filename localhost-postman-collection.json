@@ -1814,7 +1814,7 @@
       "name": "📁 12. USER PROJECTS 👥",
       "item": [
         {
-          "name": "✅ Get My Projects (User)",
+          "name": "✅ GET /users/me/projects - Мої проекти (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -1824,12 +1824,12 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/user-projects",
+              "raw": "{{base_url}}/users/me/projects",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "user-projects"
+                "users", "me", "projects"
               ]
             },
             "description": "✅ **ПРОЕКТИ ПОТОЧНОГО ЮЗЕРА**\n\nОчікуваний результат:\n- Status: 200 OK\n- Масив UserProject з деталями проекту"
@@ -2010,14 +2010,14 @@
       "name": "📁 13. INVESTMENTS 💰",
       "item": [
         {
-          "name": "GET /investments/my - Мої інвестиції (User)",
+          "name": "GET /users/me/investments - Мої інвестиції (User)",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/investments/my",
+              "raw": "{{base_url}}/users/me/investments",
               "host": ["{{base_url}}"],
               "path": ["investments", "my"]
             },
@@ -2305,14 +2305,14 @@
       "name": "📁 14. TRANSACTIONS 💳",
       "item": [
         {
-          "name": "GET /transactions/my - Мої транзакції (User)",
+          "name": "GET /users/me/transactions - Мої транзакції (User)",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/transactions/my?page=1&limit=20",
+              "raw": "{{base_url}}/users/me/transactions?page=1&limit=20",
               "host": ["{{base_url}}"],
               "path": ["transactions", "my"],
               "query": [
@@ -2512,14 +2512,14 @@
       "name": "📁 15. DIVIDENDS 🏦",
       "item": [
         {
-          "name": "GET /dividends/my - Мої дивіденди (User)",
+          "name": "GET /users/me/dividends - Мої дивіденди (User)",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/dividends/my",
+              "raw": "{{base_url}}/users/me/dividends",
               "host": ["{{base_url}}"],
               "path": ["dividends", "my"]
             },
