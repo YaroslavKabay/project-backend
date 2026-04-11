@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 
@@ -12,6 +13,7 @@ import {
   hasSufficientBalance,
   type TransactionType as CoreTransactionType,
 } from '@projectua/project-core';
+import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -44,18 +46,44 @@ export class TransactionsService {
     };
   }
 
-  // User: власні транзакції з пагінацією
-  async findAllForUser(currentUserId: number, page = 1, limit = 20) {
+  // User: власні транзакції з фільтрами та пагінацією
+  async findAllForUser(
+    currentUserId: number,
+    filters: UserTransactionsQueryDto = new UserTransactionsQueryDto(),
+  ) {
+    const {
+      type,
+      dateFrom,
+      dateTo,
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = filters;
+
     const skip = (page - 1) * limit;
+
+    const where: Prisma.TransactionWhereInput = { userId: currentUserId };
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
 
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
-        where: { userId: currentUserId },
-        orderBy: { createdAt: 'desc' },
+        where,
+        orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
       }),
-      this.prisma.transaction.count({ where: { userId: currentUserId } }),
+      this.prisma.transaction.count({ where }),
     ]);
 
     return {

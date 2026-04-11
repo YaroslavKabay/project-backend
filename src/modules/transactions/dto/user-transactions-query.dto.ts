@@ -1,0 +1,41 @@
+import {
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  Min,
+} from 'class-validator';
+import { TransactionType } from '../../../../generated/prisma';
+
+export class UserTransactionsQueryDto {
+  @IsOptional()
+  @IsEnum(TransactionType)
+  type?: TransactionType;
+
+  @IsOptional()
+  @IsDateString()
+  dateFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateTo?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit?: number = 20;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'amount'])
+  sortBy?: 'createdAt' | 'amount' = 'createdAt';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'desc';
+}

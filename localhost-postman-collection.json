@@ -2305,22 +2305,27 @@
       "name": "📁 14. TRANSACTIONS 💳",
       "item": [
         {
-          "name": "GET /users/me/transactions - Мої транзакції (User)",
+          "name": "GET /transactions - Мої транзакції (User)",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/users/me/transactions?page=1&limit=20",
+              "raw": "{{base_url}}/transactions?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
               "host": ["{{base_url}}"],
-              "path": ["transactions", "my"],
+              "path": ["transactions"],
               "query": [
                 { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                { "key": "limit", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortOrder", "value": "desc" },
+                { "key": "type", "value": "DEPOSIT", "disabled": true },
+                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
+                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
               ]
             },
-            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
+            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nФільтри: type (DEPOSIT/WITHDRAWAL/...), dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
           },
           "response": [],
           "event": [
@@ -2512,18 +2517,28 @@
       "name": "📁 15. DIVIDENDS 🏦",
       "item": [
         {
-          "name": "GET /users/me/dividends - Мої дивіденди (User)",
+          "name": "GET /dividends - Мої дивіденди (User)",
           "request": {
             "method": "GET",
             "header": [
               { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/users/me/dividends",
+              "raw": "{{base_url}}/dividends?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
               "host": ["{{base_url}}"],
-              "path": ["dividends", "my"]
+              "path": ["dividends"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortOrder", "value": "desc" },
+                { "key": "status", "value": "PAID", "disabled": true },
+                { "key": "investmentId", "value": "1", "disabled": true },
+                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
+                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
+              ]
             },
-            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**"
+            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**\n\nФільтри: status (PAID/PENDING/CANCELLED), investmentId, dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
           },
           "response": [],
           "event": [
@@ -2533,8 +2548,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Response is array', () => {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "pm.test('Response has pagination meta', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.have.property('meta');",
+                  "    pm.expect(body.meta).to.have.property('total');",
                   "});"
                 ]
               }

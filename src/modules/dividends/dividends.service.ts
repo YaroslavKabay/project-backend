@@ -5,8 +5,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDividendDto } from './dto/create-dividend.dto';
-import { DividendStatus, TransactionType } from '../../../generated/prisma';
+import { DividendStatus, Prisma, TransactionType } from '../../../generated/prisma';
 import { DIVIDEND_STATUS } from '@projectua/project-core';
+import { UserDividendsQueryDto } from './dto/user-dividends-query.dto';
 
 @Injectable()
 export class DividendsService {
@@ -32,16 +33,59 @@ export class DividendsService {
   }
 
   // User: власні дивіденди
-  async findAllForUser(userId: number) {
-    return this.prisma.dividend.findMany({
-      where: { userId },
-      include: {
-        investment: {
-          select: { id: true, startCapital: true, currentCapital: true },
+  async findAllForUser(
+    userId: number,
+    filters: UserDividendsQueryDto = new UserDividendsQueryDto(),
+  ) {
+    const {
+      status,
+      investmentId,
+      dateFrom,
+      dateTo,
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = filters;
+
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.DividendWhereInput = { userId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (investmentId) {
+      where.investmentId = investmentId;
+    }
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
+
+    const [dividends, total] = await Promise.all([
+      this.prisma.dividend.findMany({
+        where,
+        include: {
+          investment: {
+            select: { id: true, startCapital: true, currentCapital: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prisma.dividend.count({ where }),
+    ]);
+
+    return {
+      data: dividends,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number) {
