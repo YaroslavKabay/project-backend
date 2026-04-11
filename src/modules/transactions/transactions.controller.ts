@@ -14,14 +14,24 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../../../generated/prisma';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
+import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
+
+  // User: власні транзакції з фільтрами та пагінацією
+  @Get()
+  findMyTransactions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: UserTransactionsQueryDto,
+  ) {
+    return this.transactionsService.findAllForUser(user.id, query);
+  }
 
   // Admin: всі транзакції з пагінацією та фільтром по userId
   @UseGuards(RolesGuard)
@@ -34,20 +44,6 @@ export class TransactionsController {
   ) {
     return this.transactionsService.findAll(
       userId ? parseInt(userId, 10) : undefined,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
-    );
-  }
-
-  // User: власні транзакції з пагінацією
-  @Get('my')
-  findMy(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.transactionsService.findAllForUser(
-      user.id,
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );

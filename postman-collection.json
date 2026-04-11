@@ -1814,7 +1814,7 @@
       "name": "📁 12. USER PROJECTS 👥",
       "item": [
         {
-          "name": "✅ Get My Projects (User)",
+          "name": "✅ GET /users/me/projects - Мої проекти (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -1824,7 +1824,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/user-projects",
+              "raw": "{{base_url}}/users/me/projects",
               "host": [
                 "{{base_url}}"
               ],
@@ -2010,7 +2010,7 @@
       "name": "📁 13. INVESTMENTS 💰",
       "item": [
         {
-          "name": "GET /investments/my - Мої інвестиції (User)",
+          "name": "GET /users/me/investments - Мої інвестиції (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2020,7 +2020,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/investments/my",
+              "raw": "{{base_url}}/users/me/investments",
               "host": [
                 "{{base_url}}"
               ],
@@ -2393,7 +2393,7 @@
       "name": "📁 14. TRANSACTIONS 💳",
       "item": [
         {
-          "name": "GET /transactions/my - Мої транзакції (User)",
+          "name": "GET /transactions - Мої транзакції (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2403,26 +2403,24 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/transactions/my?page=1&limit=20",
+              "raw": "{{base_url}}/transactions?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "transactions",
-                "my"
+                "transactions"
               ],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortOrder", "value": "desc" },
+                { "key": "type", "value": "DEPOSIT", "disabled": true },
+                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
+                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
               ]
             },
-            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
+            "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nФільтри: type (DEPOSIT/WITHDRAWAL/...), dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
           },
           "response": [],
           "event": [
@@ -2666,7 +2664,7 @@
       "name": "📁 15. DIVIDENDS 🏦",
       "item": [
         {
-          "name": "GET /dividends/my - Мої дивіденди (User)",
+          "name": "GET /dividends - Мої дивіденди (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2676,16 +2674,25 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/dividends/my",
+              "raw": "{{base_url}}/dividends?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "dividends",
-                "my"
+                "dividends"
+              ],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortOrder", "value": "desc" },
+                { "key": "status", "value": "PAID", "disabled": true },
+                { "key": "investmentId", "value": "1", "disabled": true },
+                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
+                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
               ]
             },
-            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**"
+            "description": "✅ **МОЇ ДИВІДЕНДИ (User)**\n\nФільтри: status (PAID/PENDING/CANCELLED), investmentId, dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
           },
           "response": [],
           "event": [
@@ -2695,8 +2702,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Response is array', () => {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "pm.test('Response has pagination meta', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.have.property('meta');",
+                  "    pm.expect(body.meta).to.have.property('total');",
                   "});"
                 ]
               }
