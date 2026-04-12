@@ -24,6 +24,11 @@ import type { AuthenticatedUser } from '../auth/types/auth.types';
 export class UserProjectsController {
   constructor(private readonly userProjectsService: UserProjectsService) {}
 
+  @Get()
+  findMyProjects(@CurrentUser() user: AuthenticatedUser) {
+    return this.userProjectsService.findAllByUser(user.id);
+  }
+
   // Деталі одного UserProject поточного юзера
   @Get(':id')
   findOne(

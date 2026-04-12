@@ -5,14 +5,14 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
 @UseGuards(JwtAuthGuard)
-@Controller('dashboard')
+@Controller('user-stats')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   // Агреговані дані для дашборду поточного юзера:
   // totalInvested, capitalization, totalDividends
   @Get()
-  getDashboard(@CurrentUser() user: AuthenticatedUser) {
+  getUserStats(@CurrentUser() user: AuthenticatedUser) {
     return this.dashboardService.getUserDashboard(user.id);
   }
 }
