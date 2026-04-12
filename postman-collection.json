@@ -1814,7 +1814,7 @@
       "name": "📁 12. USER PROJECTS 👥",
       "item": [
         {
-          "name": "✅ GET /users/me/projects - Мої проекти (User)",
+          "name": "✅ GET /user-projects - Мої проекти (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -1824,7 +1824,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/users/me/projects",
+              "raw": "{{base_url}}/user-projects",
               "host": [
                 "{{base_url}}"
               ],
@@ -2010,7 +2010,7 @@
       "name": "📁 13. INVESTMENTS 💰",
       "item": [
         {
-          "name": "GET /users/me/investments - Мої інвестиції (User)",
+          "name": "GET /investments - Мої інвестиції (User)",
           "request": {
             "method": "GET",
             "header": [
@@ -2020,13 +2020,12 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/users/me/investments",
+              "raw": "{{base_url}}/investments",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "investments",
-                "my"
+                "investments"
               ]
             },
             "description": "✅ **МОЇ ІНВЕСТИЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- Array інвестицій поточного юзера"
@@ -2974,7 +2973,7 @@
       "name": "📁 16. DASHBOARD 📊",
       "item": [
         {
-          "name": "GET /dashboard - Агреговані дані юзера",
+          "name": "GET /user-stats - Агреговані дані юзера",
           "request": {
             "method": "GET",
             "header": [
@@ -2984,12 +2983,12 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/dashboard",
+              "raw": "{{base_url}}/user-stats",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "dashboard"
+                "user-stats"
               ]
             },
             "description": "✅ **ДАШБОРД ЮЗЕРА**\n\nПовертає агреговані дані для 3 карточок:\n- totalInvested — загальна сума початкових капіталів по активних інвестиціях\n- capitalization — поточний приріст (currentCapital - startCapital)\n- totalDividends — сума виплачених дивідендів"
@@ -3014,17 +3013,17 @@
           ]
         },
         {
-          "name": "GET /dashboard - 401 Unauthorized",
+          "name": "GET /user-stats - 401 Unauthorized",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/dashboard",
+              "raw": "{{base_url}}/user-stats",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "dashboard"
+                "user-stats"
               ]
             },
             "description": "❌ **БЕЗ ТОКЕНА — ЗАБЛОКОВАНО**\n\nОчікуваний результат: 401 Unauthorized"

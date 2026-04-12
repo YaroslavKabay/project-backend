@@ -26,6 +26,11 @@ import type { AuthenticatedUser } from '../auth/types/auth.types';
 export class InvestmentsController {
   constructor(private readonly investmentsService: InvestmentsService) {}
 
+  @Get()
+  findMyInvestments(@CurrentUser() user: AuthenticatedUser) {
+    return this.investmentsService.findAllForUser(user.id);
+  }
+
   // Admin: всі інвестиції (з опційним фільтром по userProjectId)
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
