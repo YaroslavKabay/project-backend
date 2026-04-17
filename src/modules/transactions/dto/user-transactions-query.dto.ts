@@ -6,7 +6,7 @@ import {
   IsOptional,
   Min,
 } from 'class-validator';
-import { TransactionType } from '../../../../generated/prisma';
+import { TransactionType } from '@prisma/client';
 
 export class UserTransactionsQueryDto {
   @IsOptional()

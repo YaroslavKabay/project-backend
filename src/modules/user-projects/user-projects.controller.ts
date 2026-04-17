@@ -16,7 +16,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserRole } from '../../../generated/prisma';
+import { UserRole } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 
 @Controller('user-projects')

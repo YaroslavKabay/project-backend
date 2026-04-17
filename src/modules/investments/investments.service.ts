@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
 import { UpdateInvestmentDto } from './dto/update-investment.dto';
-import { UserRole, InvestmentStatus } from '../../../generated/prisma';
+import { UserRole, InvestmentStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 import {
   calcProfitPercentage,

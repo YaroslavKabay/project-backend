@@ -6,7 +6,7 @@ import {
   IsOptional,
   Min,
 } from 'class-validator';
-import { DividendStatus } from '../../../../generated/prisma';
+import { DividendStatus } from '@prisma/client';
 
 export class UserDividendsQueryDto {
   @IsOptional()

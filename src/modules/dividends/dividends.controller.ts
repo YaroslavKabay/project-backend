@@ -15,7 +15,7 @@ import { CreateDividendDto } from './dto/create-dividend.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole, DividendStatus } from '../../../generated/prisma';
+import { UserRole, DividendStatus } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 import { UserDividendsQueryDto } from './dto/user-dividends-query.dto';
