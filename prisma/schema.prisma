@@ -47,6 +47,11 @@ enum RefreshTokenStatus {
   EXPIRED  // прострочений
 }
 
+enum AdminRole {
+  ADMIN   // повний доступ до бекофісу
+  MANAGER // обмежений доступ до управління
+}
+
 // ===== MODELS =====
 
 model User {
@@ -228,4 +233,35 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         AdminRole @default(MANAGER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  refreshTokens AdminRefreshToken[]
+
+  @@map("admin_users")
+}
+
+model AdminRefreshToken {
+  id          Int                @id @default(autoincrement())
+  token       String             @unique
+  adminUserId Int
+  status      RefreshTokenStatus @default(ACTIVE)
+  expiresAt   DateTime
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  userAgent   String?
+  ipAddress   String?
+  lastUsed    DateTime           @default(now())
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@map("admin_refresh_tokens")
 }
