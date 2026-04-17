@@ -14,7 +14,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../../../generated/prisma';
+import { UserRole } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';

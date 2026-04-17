@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDividendDto } from './dto/create-dividend.dto';
-import { DividendStatus, Prisma, TransactionType } from '../../../generated/prisma';
+import { DividendStatus, Prisma, TransactionType } from '@prisma/client';
 import { DIVIDEND_STATUS } from '@projectua/project-core';
 import { UserDividendsQueryDto } from './dto/user-dividends-query.dto';
 

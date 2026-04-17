@@ -5,7 +5,7 @@ import {
   IsEnum,
   IsOptional,
 } from 'class-validator';
-import { DividendStatus } from '../../../../generated/prisma';
+import { DividendStatus } from '@prisma/client';
 
 export class CreateDividendDto {
   @IsNotEmpty({ message: 'ID інвестиції не може бути пустим' })

@@ -30,7 +30,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",
     "@prisma/client": "^6.16.1",
-    "@projectua/project-core": "^1.0.5",
+    "@projectua/project-core": "^1.0.6",
     "@sendgrid/mail": "^8.1.4",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
@@ -73,6 +73,9 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "jest": {
     "moduleFileExtensions": [

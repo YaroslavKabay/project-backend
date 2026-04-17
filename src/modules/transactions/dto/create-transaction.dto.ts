@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { TransactionType } from '../../../../generated/prisma';
+import { TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
   @IsNotEmpty({ message: 'ID користувача не може бути пустим' })

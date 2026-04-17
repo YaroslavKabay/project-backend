@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { InvestmentStatus, DividendStatus } from '../../../generated/prisma';
+import { InvestmentStatus, DividendStatus } from '@prisma/client';
 import {
   INVESTMENT_STATUS,
   DIVIDEND_STATUS,

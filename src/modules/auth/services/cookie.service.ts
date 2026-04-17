@@ -40,6 +40,13 @@ export class CookieService {
     });
   }
 
+  setAdminRefreshToken(res: Response, refreshToken: string): void {
+    res.cookie('refresh_token', refreshToken, {
+      ...this.cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 днів
+    });
+  }
+
   /**
    * 🗑️ Очищує refresh token cookie (HYBRID підхід)
    * Access token не очищуємо, бо він в SDK memory

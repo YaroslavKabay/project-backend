@@ -17,7 +17,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../../../generated/prisma';
+import { UserRole } from '@prisma/client';
 
 @Controller('projects')
 export class ProjectsController {
