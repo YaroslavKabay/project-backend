@@ -14,6 +14,7 @@ import { InvestmentsModule } from './modules/investments/investments.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { DividendsModule } from './modules/dividends/dividends.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 
 @Module({
   imports: [
@@ -32,6 +33,9 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         // 📧 SENDGRID EMAIL СЕРВІС
         SENDGRID_API_KEY: Joi.string().required(),
         SENDGRID_FROM_EMAIL: Joi.string().email().required(),
+        ADMIN_JWT_SECRET: Joi.string().min(32).required(),
+        ADMIN_ACCESS_TOKEN_EXPIRES_IN: Joi.string().default('2h'),
+        ADMIN_REFRESH_TOKEN_EXPIRES_IN: Joi.string().default('7d'),
       }),
       validationOptions: {
         abortEarly: false, // Показати всі помилки валідації, не тільки першу
@@ -47,6 +51,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ]),
     PrismaModule,
     AuthModule,
+    AdminAuthModule,
     UsersModule,
     ProjectsModule,
     MarketingCardsModule,
