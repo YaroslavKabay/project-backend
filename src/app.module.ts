@@ -13,8 +13,9 @@ import { UserProjectsModule } from './modules/user-projects/user-projects.module
 import { InvestmentsModule } from './modules/investments/investments.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { DividendsModule } from './modules/dividends/dividends.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { UserStatsModule } from './modules/user-stats/user-stats.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
+import { BackofficeModule } from './modules/backoffice/backoffice.module';
 
 @Module({
   imports: [
@@ -59,7 +60,8 @@ import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
     InvestmentsModule,
     TransactionsModule,
     DividendsModule,
-    DashboardModule,
+    UserStatsModule,
+    BackofficeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

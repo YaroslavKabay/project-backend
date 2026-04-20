@@ -10,6 +10,17 @@ import { CreateUserProjectDto } from './dto/create-user-project.dto';
 export class UserProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Admin: всі user-projects без фільтрів
+  async findAll() {
+    return this.prisma.userProject.findMany({
+      include: {
+        user: { select: { id: true, name: true, surname: true, email: true } },
+        project: { select: { id: true, title: true, status: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   // Проекти поточного юзера
   async findAllByUser(userId: number) {
     return this.prisma.userProject.findMany({
