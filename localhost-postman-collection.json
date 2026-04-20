@@ -23,6 +23,46 @@
       "value": "",
       "type": "string",
       "description": "Access token для Authorization Bearer header (hybrid підхід)"
+    },
+    {
+      "key": "admin_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_user_project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_investment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_dividend_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bo_card_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -2014,12 +2054,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/investments",
-              "host": ["{{base_url}}"],
-              "path": ["investments"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments"
+              ]
             },
             "description": "✅ **МОЇ ІНВЕСТИЦІЇ (User)**\n\nОчікуваний результат:\n- Status: 200\n- Array інвестицій поточного юзера"
           },
@@ -2045,12 +2092,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/investments/admin",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "admin"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "admin"
+              ]
             },
             "description": "✅ **ВСІ ІНВЕСТИЦІЇ (Admin/Manager)**\n\nОчікуваний результат:\n- Status: 200\n- Array всіх інвестицій"
           },
@@ -2076,13 +2131,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/investments/admin?userProjectId=1",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "admin"],
-              "query": [{ "key": "userProjectId", "value": "1" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "admin"
+              ],
+              "query": [
+                {
+                  "key": "userProjectId",
+                  "value": "1"
+                }
+              ]
             },
             "description": "✅ **ФІЛЬТР ІНВЕСТИЦІЙ ПО USER PROJECT (Admin)**"
           },
@@ -2104,12 +2172,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/investments/1",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "1"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "1"
+              ]
             },
             "description": "✅ **ОДНА ІНВЕСТИЦІЯ**\n\nЮзер бачить тільки власні, Admin бачить будь-яку"
           },
@@ -2133,8 +2209,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2142,8 +2224,12 @@
             },
             "url": {
               "raw": "{{base_url}}/investments",
-              "host": ["{{base_url}}"],
-              "path": ["investments"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments"
+              ]
             },
             "description": "✅ **СТВОРИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nprofitPercentage та capitalization розраховуються автоматично:\n- profitPercentage = ((11500-10000)/10000)*100 = 15%\n- capitalization = 11500-10000 = 1500\n\nТакож автоматично оновлюється UserProject.totalInvested"
           },
@@ -2173,8 +2259,14 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2182,8 +2274,13 @@
             },
             "url": {
               "raw": "{{base_url}}/investments/{{investment_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "{{investment_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "{{investment_id}}"
+              ]
             },
             "description": "✅ **ОНОВИТИ ІНВЕСТИЦІЮ (Admin/Manager)**\n\nОновлення currentCapital — profitPercentage та capitalization перераховуються автоматично"
           },
@@ -2209,8 +2306,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2218,8 +2321,14 @@
             },
             "url": {
               "raw": "{{base_url}}/investments/{{investment_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "{{investment_id}}", "status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "{{investment_id}}",
+                "status"
+              ]
             },
             "description": "✅ **ЗМІНИТИ СТАТУС ІНВЕСТИЦІЇ**\n\nДопустимі значення: ACTIVE, SOLD, PAUSED\n\nПри SOLD/PAUSED — виключається з розрахунку UserProject.totalInvested"
           },
@@ -2245,12 +2354,20 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/investments/{{investment_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["investments", "{{investment_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments",
+                "{{investment_id}}"
+              ]
             },
             "description": "✅ **ВИДАЛИТИ ІНВЕСТИЦІЮ (Admin)**\n\nПісля видалення UserProject.totalInvested перераховується автоматично"
           },
@@ -2272,8 +2389,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{user_access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2281,8 +2404,12 @@
             },
             "url": {
               "raw": "{{base_url}}/investments",
-              "host": ["{{base_url}}"],
-              "path": ["investments"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "investments"
+              ]
             },
             "description": "❌ **ЗАБЛОКОВАНО ДЛЯ USER РОЛІ**\n\nОчікуваний результат: 403 Forbidden"
           },
@@ -2309,20 +2436,51 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/transactions?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
-              "host": ["{{base_url}}"],
-              "path": ["transactions"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "sortBy", "value": "createdAt" },
-                { "key": "sortOrder", "value": "desc" },
-                { "key": "type", "value": "DEPOSIT", "disabled": true },
-                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
-                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "type",
+                  "value": "DEPOSIT",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2024-12-31",
+                  "disabled": true
+                }
               ]
             },
             "description": "✅ **МОЇ ТРАНЗАКЦІЇ (User)**\n\nФільтри: type (DEPOSIT/WITHDRAWAL/...), dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
@@ -2351,15 +2509,29 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/transactions/admin?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["transactions", "admin"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions",
+                "admin"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             },
             "description": "✅ **ВСІ ТРАНЗАКЦІЇ (Admin/Manager)**\n\nОчікуваний результат: 200 + paginated list"
@@ -2382,8 +2554,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2391,8 +2569,12 @@
             },
             "url": {
               "raw": "{{base_url}}/transactions",
-              "host": ["{{base_url}}"],
-              "path": ["transactions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ]
             },
             "description": "✅ **ПОПОВНЕННЯ БАЛАНСУ (Admin)**\n\nDEPOSIT → балансBefore + amount = balanceAfter\nUser.balance оновлюється автоматично"
           },
@@ -2423,8 +2605,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2432,8 +2620,12 @@
             },
             "url": {
               "raw": "{{base_url}}/transactions",
-              "host": ["{{base_url}}"],
-              "path": ["transactions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ]
             },
             "description": "✅ **ВИВЕДЕННЯ КОШТІВ (Admin)**\n\nWITHDRAWAL → balance зменшується\nЯкщо balance < amount → 400 Bad Request"
           },
@@ -2457,8 +2649,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2466,8 +2664,12 @@
             },
             "url": {
               "raw": "{{base_url}}/transactions",
-              "host": ["{{base_url}}"],
-              "path": ["transactions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ]
             },
             "description": "❌ **НЕДОСТАТНЬО КОШТІВ**\n\nОчікуваний результат: 400 Bad Request"
           },
@@ -2489,12 +2691,20 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/transactions/{{transaction_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["transactions", "{{transaction_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions",
+                "{{transaction_id}}"
+              ]
             },
             "description": "✅ **ВИДАЛИТИ ТРАНЗАКЦІЮ (Admin)**"
           },
@@ -2521,21 +2731,56 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/dividends?page=1&limit=20&sortBy=createdAt&sortOrder=desc",
-              "host": ["{{base_url}}"],
-              "path": ["dividends"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "sortBy", "value": "createdAt" },
-                { "key": "sortOrder", "value": "desc" },
-                { "key": "status", "value": "PAID", "disabled": true },
-                { "key": "investmentId", "value": "1", "disabled": true },
-                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
-                { "key": "dateTo", "value": "2024-12-31", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "status",
+                  "value": "PAID",
+                  "disabled": true
+                },
+                {
+                  "key": "investmentId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2024-12-31",
+                  "disabled": true
+                }
               ]
             },
             "description": "✅ **МОЇ ДИВІДЕНДИ (User)**\n\nФільтри: status (PAID/PENDING/CANCELLED), investmentId, dateFrom, dateTo\nСортування: sortBy (createdAt|amount), sortOrder (asc|desc)\nПагінація: page, limit\n\nОчікуваний результат:\n- Status: 200\n- { data: [...], meta: { total, page, limit, totalPages } }"
@@ -2564,12 +2809,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/dividends/admin",
-              "host": ["{{base_url}}"],
-              "path": ["dividends", "admin"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends",
+                "admin"
+              ]
             },
             "description": "✅ **ВСІ ДИВІДЕНДИ (Admin/Manager)**"
           },
@@ -2591,8 +2844,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2600,8 +2859,12 @@
             },
             "url": {
               "raw": "{{base_url}}/dividends",
-              "host": ["{{base_url}}"],
-              "path": ["dividends"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends"
+              ]
             },
             "description": "✅ **НАРАХУВАТИ ДИВІДЕНД (Admin/Manager)**\n\nСтатус PENDING за замовчуванням.\nВиплата відбувається через PATCH /dividends/:id/status"
           },
@@ -2629,8 +2892,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2638,8 +2907,14 @@
             },
             "url": {
               "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["dividends", "{{dividend_id}}", "status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends",
+                "{{dividend_id}}",
+                "status"
+              ]
             },
             "description": "✅ **ВИПЛАТИТИ ДИВІДЕНД (Admin/Manager)**\n\nPAID → зараховує суму на баланс юзера + автоматично створює Transaction типу DIVIDEND_PAYMENT"
           },
@@ -2664,8 +2939,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2673,8 +2954,14 @@
             },
             "url": {
               "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["dividends", "{{dividend_id}}", "status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends",
+                "{{dividend_id}}",
+                "status"
+              ]
             },
             "description": "❌ **ПОВТОРНА ВИПЛАТА ЗАБЛОКОВАНА**\n\nОчікуваний результат: 400 Bad Request"
           },
@@ -2696,8 +2983,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -2705,8 +2998,14 @@
             },
             "url": {
               "raw": "{{base_url}}/dividends/{{dividend_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["dividends", "{{dividend_id}}", "status"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends",
+                "{{dividend_id}}",
+                "status"
+              ]
             },
             "description": "✅ **СКАСУВАТИ ДИВІДЕНД (Admin/Manager)**"
           },
@@ -2728,12 +3027,20 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/dividends/{{dividend_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["dividends", "{{dividend_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dividends",
+                "{{dividend_id}}"
+              ]
             },
             "description": "✅ **ВИДАЛИТИ ДИВІДЕНД (Admin)**\n\nВидалення заблоковано для PAID дивідендів → 400"
           },
@@ -2762,12 +3069,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/user-stats",
-              "host": ["{{base_url}}"],
-              "path": ["user-stats"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-stats"
+              ]
             },
             "description": "✅ **ДАШБОРД ЮЗЕРА**\n\nПовертає агреговані дані для 3 карточок:\n- totalInvested — загальна сума початкових капіталів по активних інвестиціях\n- capitalization — поточний приріст (currentCapital - startCapital)\n- totalDividends — сума виплачених дивідендів"
           },
@@ -2797,8 +3111,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-stats",
-              "host": ["{{base_url}}"],
-              "path": ["user-stats"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-stats"
+              ]
             },
             "description": "❌ **БЕЗ ТОКЕНА — ЗАБЛОКОВАНО**\n\nОчікуваний результат: 401 Unauthorized"
           },
@@ -2812,6 +3130,1329 @@
                   "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
                 ]
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔐 ADMIN AUTH",
+      "item": [
+        {
+          "name": "✅ Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@project.ua\",\n  \"password\": \"Admin1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin-auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin-auth",
+                "login"
+              ]
+            },
+            "description": "Логін адміна. Зберігає admin_access_token в змінну колекції."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Has access_token and user', function () {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d).to.have.property('access_token');",
+                  "    pm.expect(d).to.have.property('user');",
+                  "    pm.expect(d.user).to.have.property('role');",
+                  "});",
+                  "const d = pm.response.json();",
+                  "if (d.access_token) {",
+                  "    pm.collectionVariables.set('admin_access_token', d.access_token);",
+                  "    console.log('✅ Admin logged in, role:', d.user?.role);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "👤 Admin Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin-auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin-auth",
+                "me"
+              ]
+            },
+            "description": "Повертає поточного адміна. Потребує admin_access_token."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Returns admin profile', function () {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d).to.have.property('id');",
+                  "    pm.expect(d).to.have.property('email');",
+                  "    pm.expect(d).to.have.property('role');",
+                  "    pm.expect(['ADMIN','MANAGER']).to.include(d.role);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔄 Admin Refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin-auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin-auth",
+                "refresh"
+              ]
+            },
+            "description": "Оновлює access_token через refresh_token з HTTP-only cookie."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const d = pm.response.json();",
+                  "if (d.access_token) {",
+                  "    pm.collectionVariables.set('admin_access_token', d.access_token);",
+                  "    console.log('✅ Admin token refreshed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🚪 Admin Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin-auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin-auth",
+                "logout"
+              ]
+            },
+            "description": "Розлогінює адміна. Очищує refresh_token cookie і відкликає токен у БД."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Returns message', function () {",
+                  "    const d = pm.response.json();",
+                  "    pm.expect(d).to.have.property('message');",
+                  "});",
+                  "pm.collectionVariables.set('admin_access_token', '');",
+                  "console.log('✅ Admin logged out');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "❌ Admin Me with USER token (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin-auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin-auth",
+                "me"
+              ]
+            },
+            "description": "Перевірка ізоляції: звичайний user token не повинен пройти admin guard."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "console.log('✅ User token correctly rejected by admin guard');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏢 BACKOFFICE",
+      "item": [
+        {
+          "name": "📁 Projects",
+          "item": [
+            {
+              "name": "✅ Get All Projects",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "projects"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_project_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_project_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Project",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "projects"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Backoffice Test Project\",\n  \"description\": \"Created via backoffice\",\n  \"targetAmount\": 100000,\n  \"profitPercentage\": 15\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_project_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_project_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Project",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/projects/{{bo_project_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "projects",
+                    "{{bo_project_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Project Title\",\n  \"profitPercentage\": 18\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status PUT', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Project",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/projects/{{bo_project_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "projects",
+                    "{{bo_project_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Users (read-only)",
+          "item": [
+            {
+              "name": "✅ Get All Users",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_user_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_user_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Get User by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users/{{bo_user_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users",
+                    "{{bo_user_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 User-Projects",
+          "item": [
+            {
+              "name": "✅ Get All User-Projects",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/user-projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "user-projects"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_user_project_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_user_project_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create User-Project",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/user-projects",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "user-projects"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": 1,\n  \"projectId\": 1\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_user_project_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_user_project_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete User-Project",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/user-projects/{{bo_user_project_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "user-projects",
+                    "{{bo_user_project_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Investments",
+          "item": [
+            {
+              "name": "✅ Get All Investments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_investment_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_investment_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Investment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userProjectId\": 1,\n  \"startCapital\": 5000,\n  \"hasIncome\": true\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_investment_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_investment_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Investment",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments/{{bo_investment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments",
+                    "{{bo_investment_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentCapital\": 5500,\n  \"profitPercentage\": 10\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status PUT', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Investment Status",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments/{{bo_investment_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments",
+                    "{{bo_investment_id}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"PAUSED\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status PATCH', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Investment",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments/{{bo_investment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments",
+                    "{{bo_investment_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Dividends",
+          "item": [
+            {
+              "name": "✅ Get All Dividends",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/dividends",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "dividends"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_dividend_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_dividend_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Dividend",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/dividends",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "dividends"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"investmentId\": 1,\n  \"userId\": 1,\n  \"amount\": 500\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_dividend_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_dividend_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Dividend Status → PAID",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/dividends/{{bo_dividend_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "dividends",
+                    "{{bo_dividend_id}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"PAID\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status PATCH', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Dividend",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/dividends/{{bo_dividend_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "dividends",
+                    "{{bo_dividend_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Transactions",
+          "item": [
+            {
+              "name": "✅ Get All Transactions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/transactions",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "transactions"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_transaction_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_transaction_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Transaction",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/transactions",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "transactions"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": 1,\n  \"type\": \"DEPOSIT\",\n  \"amount\": 1000,\n  \"paymentMethod\": \"bank_transfer\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_transaction_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_transaction_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Transaction",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/transactions/{{bo_transaction_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "transactions",
+                    "{{bo_transaction_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Marketing Cards",
+          "item": [
+            {
+              "name": "✅ Get All Marketing Cards",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/marketing-cards",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "marketing-cards"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_card_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_card_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Marketing Card",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/marketing-cards",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "marketing-cards"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"projectId\": 1,\n  \"title\": \"Test Card\",\n  \"content\": \"Card content\",\n  \"imageUrls\": []\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status POST', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_card_id', d[0].id);",
+                      "else if (d.id) pm.collectionVariables.set('bo_card_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Marketing Card",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/marketing-cards/{{bo_card_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "marketing-cards",
+                    "{{bo_card_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Card Title\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status PUT', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Marketing Card",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/marketing-cards/{{bo_card_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "marketing-cards",
+                    "{{bo_card_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status DELETE', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "📁 Security Tests",
+          "item": [
+            {
+              "name": "❌ Access with USER token (should 401)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Access without token (should 401)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/investments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "investments"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
             }
           ]
         }

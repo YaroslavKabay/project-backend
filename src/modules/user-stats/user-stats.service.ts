@@ -8,7 +8,7 @@ import {
 } from '@projectua/project-core';
 
 @Injectable()
-export class DashboardService {
+export class UserStatsService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Агреговані дані для дашборду юзера (3 карточки)
