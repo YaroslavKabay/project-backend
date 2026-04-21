@@ -6,20 +6,24 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserProjectsService } from '../../user-projects/user-projects.service';
 import { CreateUserProjectDto } from '../../user-projects/dto/create-user-project.dto';
 import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard';
+import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
+import { Roles } from '../../../common/decorators/roles.decorator';
+import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
 
-@UseGuards(AdminJwtAuthGuard)
+@UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/user-projects')
 export class BackofficeUserProjectsController {
   constructor(private readonly userProjectsService: UserProjectsService) {}
 
   @Get()
-  findAll() {
-    return this.userProjectsService.findAll();
+  findAll(@Query() filters: BackofficeQueryDto) {
+    return this.userProjectsService.findAll(filters);
   }
 
   @Post()
@@ -27,6 +31,7 @@ export class BackofficeUserProjectsController {
     return this.userProjectsService.create(dto);
   }
 
+  @Roles('ADMIN')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userProjectsService.remove(id);
