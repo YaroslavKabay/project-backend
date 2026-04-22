@@ -7,6 +7,7 @@ import { InvestmentsModule } from '../investments/investments.module';
 import { DividendsModule } from '../dividends/dividends.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { MarketingCardsModule } from '../marketing-cards/marketing-cards.module';
+import { AuthModule } from '../auth/auth.module';
 import { BackofficeProjectsController } from './controllers/backoffice-projects.controller';
 import { BackofficeUsersController } from './controllers/backoffice-users.controller';
 import { BackofficeUserProjectsController } from './controllers/backoffice-user-projects.controller';
@@ -14,10 +15,12 @@ import { BackofficeInvestmentsController } from './controllers/backoffice-invest
 import { BackofficeDividendsController } from './controllers/backoffice-dividends.controller';
 import { BackofficeTransactionsController } from './controllers/backoffice-transactions.controller';
 import { BackofficeMarketingCardsController } from './controllers/backoffice-marketing-cards.controller';
+import { BackofficeAdminUsersController } from './controllers/backoffice-admin-users.controller';
 
 @Module({
   imports: [
     AdminAuthModule,
+    AuthModule,
     ProjectsModule,
     UsersModule,
     UserProjectsModule,
@@ -34,6 +37,7 @@ import { BackofficeMarketingCardsController } from './controllers/backoffice-mar
     BackofficeDividendsController,
     BackofficeTransactionsController,
     BackofficeMarketingCardsController,
+    BackofficeAdminUsersController,
   ],
 })
 export class BackofficeModule {}

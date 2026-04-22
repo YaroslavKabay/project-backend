@@ -14,36 +14,56 @@ import {
   type TransactionType as CoreTransactionType,
 } from '@projectua/project-core';
 import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';
+import { BackofficeTransactionsQueryDto } from '../backoffice/dto/backoffice-transactions-query.dto';
 
 @Injectable()
 export class TransactionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Admin: всі транзакції з пагінацією та опційним фільтром по userId
-  async findAll(userId?: number, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
+  // Admin: всі транзакції з фільтрами
+  async findAll(
+    filters: BackofficeTransactionsQueryDto = new BackofficeTransactionsQueryDto(),
+  ) {
+    const {
+      userId,
+      type,
+      dateFrom,
+      dateTo,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = filters;
 
-    const [transactions, total] = await Promise.all([
+    const skip = (page - 1) * limit;
+    const where: Prisma.TransactionWhereInput = {};
+
+    if (userId) where.userId = userId;
+    if (type) where.type = type;
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
+
+    const [data, total] = await Promise.all([
       this.prisma.transaction.findMany({
-        where: userId ? { userId } : undefined,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
+        where,
         include: {
           user: {
             select: { id: true, name: true, surname: true, email: true },
           },
         },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
       }),
-      this.prisma.transaction.count({
-        where: userId ? { userId } : undefined,
-      }),
+      this.prisma.transaction.count({ where }),
     ]);
 
-    return {
-      data: transactions,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    };
+    return { data, total, page, limit };
   }
 
   // User: власні транзакції з фільтрами та пагінацією

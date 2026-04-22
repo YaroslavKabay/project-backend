@@ -1,20 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  ParseIntPipe,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';
@@ -24,52 +10,11 @@ import { UserTransactionsQueryDto } from './dto/user-transactions-query.dto';
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
-  // User: власні транзакції з фільтрами та пагінацією
   @Get()
   findMyTransactions(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: UserTransactionsQueryDto,
   ) {
     return this.transactionsService.findAllForUser(user.id, query);
-  }
-
-  // Admin: всі транзакції з пагінацією та фільтром по userId
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @Get('admin')
-  findAll(
-    @Query('userId') userId?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.transactionsService.findAll(
-      userId ? parseInt(userId, 10) : undefined,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
-    );
-  }
-
-  // Admin: одна транзакція
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.transactionsService.findOne(id);
-  }
-
-  // Admin: створити транзакцію (DEPOSIT, WITHDRAWAL тощо)
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @Post()
-  create(@Body() dto: CreateTransactionDto) {
-    return this.transactionsService.create(dto);
-  }
-
-  // Admin: видалення транзакції
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.transactionsService.remove(id);
   }
 }

@@ -4,32 +4,11 @@ import {
   IsStrongPassword,
   IsNotEmpty,
 } from 'class-validator';
-
-// ================================
-// 🔐 ЦЕНТРАЛІЗОВАНІ КОНСТАНТИ ВАЛІДАЦІЇ ПАРОЛЮ
-// ================================
-
-/**
- * 🔧 Конфігурація сильного паролю для IsStrongPassword
- */
-const STRONG_PASSWORD_CONFIG = {
-  minLength: 8,
-  minLowercase: 1, // Хоча б 1 мала літера
-  minUppercase: 1, // Хоча б 1 велика літера
-  minNumbers: 1, // Хоча б 1 цифра
-  minSymbols: 1, // Хоча б 1 спецсимвол
-};
-
-/**
- * 📝 Повідомлення про помилку валідації паролю
- */
-const PASSWORD_ERROR_MESSAGE =
-  'Пароль повинен містити мінімум 8 символів, велику та малу літери, цифру та спецсимвол';
-
-/**
- * 📏 Максимальна довжина паролю
- */
-const MAX_PASSWORD_LENGTH = 50;
+import {
+  STRONG_PASSWORD_CONFIG,
+  PASSWORD_ERROR_MESSAGE,
+  MAX_PASSWORD_LENGTH,
+} from '@projectua/project-core';
 
 /**
  * 🔐 СПІЛЬНІ ПРАВИЛА ВАЛІДАЦІЇ ПАРОЛЮ

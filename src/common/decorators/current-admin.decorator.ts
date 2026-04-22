@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import type { AuthenticatedAdmin } from '../../modules/admin-auth/types/admin-auth.types';
+import type { AuthenticatedAdmin } from '@projectua/project-core';
 
 interface AuthenticatedAdminRequest {
   user: AuthenticatedAdmin;

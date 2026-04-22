@@ -3,22 +3,51 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserProjectDto } from './dto/create-user-project.dto';
+import { BackofficeUserProjectsQueryDto } from '../backoffice/dto/backoffice-user-projects-query.dto';
 
 @Injectable()
 export class UserProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Admin: всі user-projects без фільтрів
-  async findAll() {
-    return this.prisma.userProject.findMany({
-      include: {
-        user: { select: { id: true, name: true, surname: true, email: true } },
-        project: { select: { id: true, title: true, status: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  // Admin: всі user-projects з фільтрами
+  async findAll(
+    filters: BackofficeUserProjectsQueryDto = new BackofficeUserProjectsQueryDto(),
+  ) {
+    const {
+      userId,
+      projectId,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = filters;
+
+    const skip = (page - 1) * limit;
+    const where: Prisma.UserProjectWhereInput = {};
+
+    if (userId) where.userId = userId;
+    if (projectId) where.projectId = projectId;
+
+    const [data, total] = await Promise.all([
+      this.prisma.userProject.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, name: true, surname: true, email: true },
+          },
+          project: { select: { id: true, title: true, status: true } },
+        },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prisma.userProject.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   // Проекти поточного юзера

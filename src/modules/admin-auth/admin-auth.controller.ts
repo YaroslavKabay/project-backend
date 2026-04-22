@@ -17,7 +17,7 @@ import { CookieService } from '../auth/services/cookie.service';
 import { LoginDto } from '../auth/dto/login.dto';
 import { AdminJwtAuthGuard } from './guards/admin-jwt-auth.guard';
 import { CurrentAdmin } from '../../common/decorators/current-admin.decorator';
-import type { AuthenticatedAdmin } from './types/admin-auth.types';
+import type { AuthenticatedAdmin } from '@projectua/project-core';
 
 @Controller('admin-auth')
 export class AdminAuthController {
@@ -34,11 +34,20 @@ export class AdminAuthController {
     @Body() dto: LoginDto,
     @Request() req: ExpressRequest,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string; access_token: string; user: AuthenticatedAdmin }> {
+  ): Promise<{
+    message: string;
+    access_token: string;
+    user: AuthenticatedAdmin;
+  }> {
     const userAgent = req.headers['user-agent'];
     const ip = this.getClientIp(req);
 
-    const result = await this.adminAuthService.login(dto.email, dto.password, userAgent, ip);
+    const result = await this.adminAuthService.login(
+      dto.email,
+      dto.password,
+      userAgent,
+      ip,
+    );
 
     this.cookieService.setAdminRefreshToken(res, result.refresh_token);
 
@@ -53,7 +62,11 @@ export class AdminAuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Request() req: ExpressRequest,
-  ): Promise<{ message: string; access_token: string; user: AuthenticatedAdmin }> {
+  ): Promise<{
+    message: string;
+    access_token: string;
+    user: AuthenticatedAdmin;
+  }> {
     const refreshToken = this.cookieService.getRefreshToken(req);
 
     if (!refreshToken) {

@@ -1,7 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ADMIN_ROLES_KEY } from '../../../common/decorators/admin-roles.decorator';
-import type { AuthenticatedAdmin } from '../types/admin-auth.types';
+import type { AuthenticatedAdmin } from '@projectua/project-core';
 
 @Injectable()
 export class AdminRolesGuard implements CanActivate {
@@ -13,7 +18,9 @@ export class AdminRolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
     if (!requiredRoles?.length) return true;
-    const request = context.switchToHttp().getRequest<{ user: AuthenticatedAdmin }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user: AuthenticatedAdmin }>();
     if (!requiredRoles.includes(request.user.role)) {
       throw new ForbiddenException('Недостатньо прав');
     }
