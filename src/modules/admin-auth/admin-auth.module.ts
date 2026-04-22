@@ -11,11 +11,7 @@ import { adminJwtConfig } from '../../config/admin-jwt.config';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register(adminJwtConfig),
-    PrismaModule,
-  ],
+  imports: [PassportModule, JwtModule.register(adminJwtConfig), PrismaModule],
   controllers: [AdminAuthController],
   providers: [
     AdminAuthService,

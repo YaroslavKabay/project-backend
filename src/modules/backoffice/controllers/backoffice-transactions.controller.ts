@@ -14,7 +14,7 @@ import { CreateTransactionDto } from '../../transactions/dto/create-transaction.
 import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard';
 import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
-import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
+import { BackofficeTransactionsQueryDto } from '../dto/backoffice-transactions-query.dto';
 
 @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/transactions')
@@ -22,7 +22,7 @@ export class BackofficeTransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get()
-  findAll(@Query() filters: BackofficeQueryDto) {
+  findAll(@Query() filters: BackofficeTransactionsQueryDto) {
     return this.transactionsService.findAll(filters);
   }
 

@@ -1,10 +1,19 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { adminRefreshTokenConfig } from '../../config/admin-jwt.config';
-import { AdminJwtPayload, AuthenticatedAdmin } from './types/admin-auth.types';
+import { AdminJwtPayload, AuthenticatedAdmin } from '@projectua/project-core';
+import { CreateAdminUserDto } from '../backoffice/dto/create-admin-user.dto';
+import { UpdateAdminUserDto } from '../backoffice/dto/update-admin-user.dto';
 
 @Injectable()
 export class AdminAuthService {
@@ -20,7 +29,11 @@ export class AdminAuthService {
     password: string,
     userAgent?: string,
     ipAddress?: string,
-  ): Promise<{ access_token: string; refresh_token: string; user: AuthenticatedAdmin }> {
+  ): Promise<{
+    access_token: string;
+    refresh_token: string;
+    user: AuthenticatedAdmin;
+  }> {
     const admin = await this.prisma.adminUser.findUnique({
       where: { email },
     });
@@ -44,7 +57,11 @@ export class AdminAuthService {
     };
 
     const accessToken = this.jwtService.sign(jwtPayload);
-    const refreshToken = await this.generateRefreshToken(admin.id, userAgent, ipAddress);
+    const refreshToken = await this.generateRefreshToken(
+      admin.id,
+      userAgent,
+      ipAddress,
+    );
 
     this.logger.log(`✅ Admin logged in successfully: ${email}`);
 
@@ -92,8 +109,12 @@ export class AdminAuthService {
     });
 
     if (!refreshTokenRecord) {
-      this.logger.warn(`Admin refresh token validation failed: Invalid or expired token`);
-      throw new UnauthorizedException('Refresh токен недійсний або прострочений');
+      this.logger.warn(
+        `Admin refresh token validation failed: Invalid or expired token`,
+      );
+      throw new UnauthorizedException(
+        'Refresh токен недійсний або прострочений',
+      );
     }
 
     const adminUser = refreshTokenRecord.adminUser;
@@ -116,7 +137,10 @@ export class AdminAuthService {
     return { access_token: newAccessToken, user: adminUser };
   }
 
-  async revokeRefreshToken(adminId: number, refreshToken?: string): Promise<void> {
+  async revokeRefreshToken(
+    adminId: number,
+    refreshToken?: string,
+  ): Promise<void> {
     if (refreshToken) {
       const tokenHash = crypto
         .createHash('sha256')
@@ -140,6 +164,84 @@ export class AdminAuthService {
         data: { status: 'REVOKED' },
       });
     }
+  }
+
+  private readonly ADMIN_SELECT = {
+    id: true,
+    email: true,
+    name: true,
+    role: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+
+  async findAllAdmins() {
+    return this.prisma.adminUser.findMany({
+      select: this.ADMIN_SELECT,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createAdmin(dto: CreateAdminUserDto) {
+    const existing = await this.prisma.adminUser.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existing) {
+      throw new ConflictException('Адмін з таким email вже існує');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    return this.prisma.adminUser.create({
+      data: { email: dto.email, passwordHash, name: dto.name, role: dto.role },
+      select: this.ADMIN_SELECT,
+    });
+  }
+
+  async updateAdmin(id: number, dto: UpdateAdminUserDto) {
+    const admin = await this.prisma.adminUser.findUnique({ where: { id } });
+
+    if (!admin) {
+      throw new NotFoundException(`Адміна з id ${id} не знайдено`);
+    }
+
+    return this.prisma.adminUser.update({
+      where: { id },
+      data: dto,
+      select: this.ADMIN_SELECT,
+    });
+  }
+
+  async deleteAdmin(id: number, currentAdminId: number) {
+    if (id === currentAdminId) {
+      throw new BadRequestException('Не можна видалити самого себе');
+    }
+
+    const admin = await this.prisma.adminUser.findUnique({ where: { id } });
+
+    if (!admin) {
+      throw new NotFoundException(`Адміна з id ${id} не знайдено`);
+    }
+
+    await this.prisma.adminUser.delete({ where: { id } });
+    return { message: `Адміна з id ${id} видалено` };
+  }
+
+  async resetAdminPassword(id: number, newPassword: string) {
+    const admin = await this.prisma.adminUser.findUnique({ where: { id } });
+
+    if (!admin) {
+      throw new NotFoundException(`Адміна з id ${id} не знайдено`);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    return this.prisma.adminUser.update({
+      where: { id },
+      data: { passwordHash },
+      select: this.ADMIN_SELECT,
+    });
   }
 
   private async generateRefreshToken(

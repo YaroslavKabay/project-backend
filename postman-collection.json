@@ -30,6 +30,12 @@
       "type": "string"
     },
     {
+      "key": "manager_access_token",
+      "value": "",
+      "type": "string",
+      "description": "Access token для MANAGER ролі (для тестування обмежень на DELETE)"
+    },
+    {
       "key": "bo_project_id",
       "value": "",
       "type": "string"
@@ -63,6 +69,12 @@
       "key": "bo_card_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "bo_admin_user_id",
+      "value": "",
+      "type": "string",
+      "description": "ID адмін-юзера для тестування CRUD"
     }
   ],
   "item": [
@@ -3378,6 +3390,50 @@
                   "path": [
                     "backoffice",
                     "projects"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "active",
+                      "disabled": true,
+                      "description": "Статус проекту"
+                    },
+                    {
+                      "key": "dateFrom",
+                      "value": "2024-01-01",
+                      "disabled": true,
+                      "description": "Дата від"
+                    },
+                    {
+                      "key": "dateTo",
+                      "value": "2025-12-31",
+                      "disabled": true,
+                      "description": "Дата до"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -3523,7 +3579,7 @@
           ]
         },
         {
-          "name": "📁 Users (read-only)",
+          "name": "📁 Users",
           "item": [
             {
               "name": "✅ Get All Users",
@@ -3543,6 +3599,50 @@
                   "path": [
                     "backoffice",
                     "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "john",
+                      "disabled": true,
+                      "description": "Пошук по email або name"
+                    },
+                    {
+                      "key": "dateFrom",
+                      "value": "2024-01-01",
+                      "disabled": true,
+                      "description": "Дата від"
+                    },
+                    {
+                      "key": "dateTo",
+                      "value": "2025-12-31",
+                      "disabled": true,
+                      "description": "Дата до"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -3555,8 +3655,7 @@
                     "exec": [
                       "pm.test('Status GET', () => pm.response.to.have.status(200));",
                       "const d = pm.response.json();",
-                      "if (Array.isArray(d) && d.length > 0) pm.collectionVariables.set('bo_user_id', d[0].id);",
-                      "else if (d.id) pm.collectionVariables.set('bo_user_id', d.id);"
+                      "if (d.data && d.data.length > 0) pm.collectionVariables.set('bo_user_id', d.data[0].id);"
                     ]
                   }
                 }
@@ -3591,7 +3690,94 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Has user fields', () => {",
+                      "  pm.expect(d).to.have.property('id');",
+                      "  pm.expect(d).to.have.property('email');",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update User (PATCH)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"surname\": \"Updated Surname\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users/{{bo_user_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users",
+                    "{{bo_user_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Name updated', () => pm.expect(d.name).to.equal('Updated Name'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Reset Password for User (POST)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users/{{bo_user_id}}/reset-password",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users",
+                    "{{bo_user_id}}",
+                    "reset-password"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                      "console.log('Reset password response:', JSON.stringify(pm.response.json()));"
                     ]
                   }
                 }
@@ -3620,6 +3806,44 @@
                   "path": [
                     "backoffice",
                     "user-projects"
+                  ],
+                  "query": [
+                    {
+                      "key": "userId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по юзеру"
+                    },
+                    {
+                      "key": "projectId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по проекту"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -3742,6 +3966,56 @@
                   "path": [
                     "backoffice",
                     "investments"
+                  ],
+                  "query": [
+                    {
+                      "key": "userId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по юзеру"
+                    },
+                    {
+                      "key": "status",
+                      "value": "ACTIVE",
+                      "disabled": true,
+                      "description": "ACTIVE | SOLD | PAUSED"
+                    },
+                    {
+                      "key": "dateFrom",
+                      "value": "2024-01-01",
+                      "disabled": true,
+                      "description": "Дата від"
+                    },
+                    {
+                      "key": "dateTo",
+                      "value": "2025-12-31",
+                      "disabled": true,
+                      "description": "Дата до"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку (max 100)"
+                    }
                   ]
                 }
               },
@@ -3951,6 +4225,62 @@
                   "path": [
                     "backoffice",
                     "dividends"
+                  ],
+                  "query": [
+                    {
+                      "key": "userId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по юзеру"
+                    },
+                    {
+                      "key": "investmentId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по інвестиції"
+                    },
+                    {
+                      "key": "status",
+                      "value": "PENDING",
+                      "disabled": true,
+                      "description": "PENDING | PAID | CANCELLED"
+                    },
+                    {
+                      "key": "dateFrom",
+                      "value": "2024-01-01",
+                      "disabled": true,
+                      "description": "Дата від"
+                    },
+                    {
+                      "key": "dateTo",
+                      "value": "2025-12-31",
+                      "disabled": true,
+                      "description": "Дата до"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -4117,6 +4447,56 @@
                   "path": [
                     "backoffice",
                     "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "userId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по юзеру"
+                    },
+                    {
+                      "key": "type",
+                      "value": "DEPOSIT",
+                      "disabled": true,
+                      "description": "DEPOSIT | WITHDRAWAL | DIVIDEND_PAYMENT | INVESTMENT_PURCHASE | INVESTMENT_SALE | FEE_CHARGE | REFUND_ISSUED"
+                    },
+                    {
+                      "key": "dateFrom",
+                      "value": "2024-01-01",
+                      "disabled": true,
+                      "description": "Дата від"
+                    },
+                    {
+                      "key": "dateTo",
+                      "value": "2025-12-31",
+                      "disabled": true,
+                      "description": "Дата до"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -4239,6 +4619,38 @@
                   "path": [
                     "backoffice",
                     "marketing-cards"
+                  ],
+                  "query": [
+                    {
+                      "key": "projectId",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Фільтр по проекту"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "createdAt",
+                      "disabled": true,
+                      "description": "Поле сортування"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "desc",
+                      "disabled": true,
+                      "description": "asc | desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "Сторінка"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true,
+                      "description": "Записів на сторінку"
+                    }
                   ]
                 }
               },
@@ -4384,6 +4796,230 @@
           ]
         },
         {
+          "name": "📁 Admin Users",
+          "item": [
+            {
+              "name": "✅ Get All Admins",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Returns array', () => pm.expect(d).to.be.an('array'));",
+                      "if (d.length > 0) pm.collectionVariables.set('bo_admin_user_id', d[d.length - 1].id);",
+                      "pm.test('No passwordHash exposed', () => d.forEach(a => pm.expect(a).to.not.have.property('passwordHash')));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Create Admin User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"manager@test.com\",\n  \"password\": \"Manager123!\",\n  \"name\": \"Test Manager\",\n  \"role\": \"MANAGER\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                      "const d = pm.response.json();",
+                      "pm.test('No passwordHash', () => pm.expect(d).to.not.have.property('passwordHash'));",
+                      "pm.test('Role is MANAGER', () => pm.expect(d.role).to.equal('MANAGER'));",
+                      "pm.collectionVariables.set('bo_admin_user_id', d.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Create Admin - Duplicate Email",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"manager@test.com\",\n  \"password\": \"Manager123!\",\n  \"name\": \"Duplicate\",\n  \"role\": \"MANAGER\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Update Admin User",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Manager\",\n  \"role\": \"ADMIN\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users/{{bo_admin_user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users", "{{bo_admin_user_id}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Name updated', () => pm.expect(d.name).to.equal('Updated Manager'));",
+                      "pm.test('Role updated to ADMIN', () => pm.expect(d.role).to.equal('ADMIN'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Reset Admin Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"NewPassword123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users/{{bo_admin_user_id}}/reset-password",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users", "{{bo_admin_user_id}}", "reset-password"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('No passwordHash exposed', () => pm.expect(d).to.not.have.property('passwordHash'));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Delete Self (should 400)",
+              "description": "Адмін не може видалити сам себе",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users", "1"],
+                  "description": "Заміни 1 на ID свого адміна"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "✅ Delete Admin User",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/admin-users/{{bo_admin_user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["backoffice", "admin-users", "{{bo_admin_user_id}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Has message', () => pm.expect(d).to.have.property('message'));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "📁 Security Tests",
           "item": [
             {
@@ -4393,7 +5029,8 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{access_token}}"
+                    "value": "Bearer {{access_token}}",
+                    "description": "User JWT — не admin JWT, має повернути 401"
                   }
                 ],
                 "url": {
@@ -4414,7 +5051,7 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                      "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
                     ]
                   }
                 }
@@ -4424,12 +5061,7 @@
               "name": "❌ Access without token (should 401)",
               "request": {
                 "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_access_token}}"
-                  }
-                ],
+                "header": [],
                 "url": {
                   "raw": "{{base_url}}/backoffice/investments",
                   "host": [
@@ -4448,7 +5080,86 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test('Status GET', () => pm.response.to.have.status(200));"
+                      "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ MANAGER cannot DELETE project (should 403)",
+              "description": "⚠️ Спочатку залогінься як MANAGER і встанови manager_access_token вручну",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manager_access_token}}",
+                    "description": "MANAGER token — не може видаляти, тільки ADMIN"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/projects/{{bo_project_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "projects",
+                    "{{bo_project_id}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403 Forbidden (MANAGER cannot delete)', () => pm.response.to.have.status(403));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Invalid filter param (should 400)",
+              "description": "forbidNonWhitelisted — невідомий параметр має повернути 400",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/backoffice/users?unknownParam=test",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "backoffice",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "unknownParam",
+                      "value": "test",
+                      "description": "Невідомий параметр — має відхилитись"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 400 Bad Request (unknown param rejected)', () => pm.response.to.have.status(400));"
                     ]
                   }
                 }

@@ -16,7 +16,7 @@ import { UpdateMarketingCardDto } from '../../marketing-cards/dto/update-marketi
 import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard';
 import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
-import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
+import { BackofficeMarketingCardsQueryDto } from '../dto/backoffice-marketing-cards-query.dto';
 
 @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/marketing-cards')
@@ -24,7 +24,7 @@ export class BackofficeMarketingCardsController {
   constructor(private readonly marketingCardsService: MarketingCardsService) {}
 
   @Get()
-  findAll(@Query() filters: BackofficeQueryDto) {
+  findAll(@Query() filters: BackofficeMarketingCardsQueryDto) {
     return this.marketingCardsService.findAll(filters);
   }
 
@@ -34,7 +34,10 @@ export class BackofficeMarketingCardsController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMarketingCardDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMarketingCardDto,
+  ) {
     return this.marketingCardsService.update(id, dto);
   }
 

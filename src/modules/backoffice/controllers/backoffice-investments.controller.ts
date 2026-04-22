@@ -18,7 +18,7 @@ import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard'
 import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { InvestmentStatus } from '@prisma/client';
-import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
+import { BackofficeInvestmentsQueryDto } from '../dto/backoffice-investments-query.dto';
 
 @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/investments')
@@ -26,7 +26,7 @@ export class BackofficeInvestmentsController {
   constructor(private readonly investmentsService: InvestmentsService) {}
 
   @Get()
-  findAll(@Query() filters: BackofficeQueryDto) {
+  findAll(@Query() filters: BackofficeInvestmentsQueryDto) {
     return this.investmentsService.findAll(filters);
   }
 
@@ -36,7 +36,10 @@ export class BackofficeInvestmentsController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateInvestmentDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateInvestmentDto,
+  ) {
     return this.investmentsService.update(id, dto);
   }
 

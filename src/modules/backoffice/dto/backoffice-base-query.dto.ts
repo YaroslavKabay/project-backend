@@ -1,31 +1,15 @@
 import {
   IsOptional,
-  IsInt,
+  IsDateString,
   IsString,
   IsIn,
-  IsDateString,
+  IsInt,
   Min,
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class BackofficeQueryDto {
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  userId?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  projectId?: number;
-
-  @IsOptional()
-  @IsString()
-  status?: string;
-
+export class BackofficeBaseQueryDto {
   @IsOptional()
   @IsDateString()
   dateFrom?: string;

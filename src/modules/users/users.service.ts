@@ -1,6 +1,12 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { BackofficeUsersQueryDto } from '../backoffice/dto/backoffice-users-query.dto';
 
 const USER_SELECT = {
   id: true,
@@ -18,8 +24,48 @@ const USER_SELECT = {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.user.findMany({ select: USER_SELECT });
+  async findAll(
+    filters: BackofficeUsersQueryDto = new BackofficeUsersQueryDto(),
+  ) {
+    const {
+      search,
+      dateFrom,
+      dateTo,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = filters;
+
+    const skip = (page - 1) * limit;
+    const where: Prisma.UserWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { email: { contains: search } },
+        { name: { contains: search } },
+      ];
+    }
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: USER_SELECT,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: number) {

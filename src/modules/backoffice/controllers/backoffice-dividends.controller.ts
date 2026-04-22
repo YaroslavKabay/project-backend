@@ -16,7 +16,7 @@ import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard'
 import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { DividendStatus } from '@prisma/client';
-import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
+import { BackofficeDividendsQueryDto } from '../dto/backoffice-dividends-query.dto';
 
 @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/dividends')
@@ -24,7 +24,7 @@ export class BackofficeDividendsController {
   constructor(private readonly dividendsService: DividendsService) {}
 
   @Get()
-  findAll(@Query() filters: BackofficeQueryDto) {
+  findAll(@Query() filters: BackofficeDividendsQueryDto) {
     return this.dividendsService.findAll(filters);
   }
 

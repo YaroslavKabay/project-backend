@@ -3,10 +3,10 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma, UserRole, InvestmentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
 import { UpdateInvestmentDto } from './dto/update-investment.dto';
-import { UserRole, InvestmentStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/types/auth.types';
 import {
   calcProfitPercentage,
@@ -14,6 +14,7 @@ import {
   calcTotalCapitalization,
   calcAverageProfitPercentage,
 } from '@projectua/project-core';
+import { BackofficeInvestmentsQueryDto } from '../backoffice/dto/backoffice-investments-query.dto';
 
 @Injectable()
 export class InvestmentsService {
@@ -26,21 +27,54 @@ export class InvestmentsService {
     };
   }
 
-  // Admin: всі інвестиції або фільтр по userProjectId
-  async findAll(userProjectId?: number) {
-    return this.prisma.investment.findMany({
-      where: userProjectId ? { userProjectId } : undefined,
-      include: {
-        userProject: {
-          select: {
-            id: true,
-            userId: true,
-            projectId: true,
+  // Admin: всі інвестиції з фільтрами
+  async findAll(
+    filters: BackofficeInvestmentsQueryDto = new BackofficeInvestmentsQueryDto(),
+  ) {
+    const {
+      userId,
+      status,
+      dateFrom,
+      dateTo,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = filters;
+
+    const skip = (page - 1) * limit;
+    const where: Prisma.InvestmentWhereInput = {};
+
+    if (userId) where.userProject = { userId };
+    if (status) where.status = status as InvestmentStatus;
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.investment.findMany({
+        where,
+        include: {
+          userProject: {
+            select: {
+              id: true,
+              userId: true,
+              projectId: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prisma.investment.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   // User: тільки власні інвестиції

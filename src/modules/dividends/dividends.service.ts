@@ -8,28 +8,61 @@ import { CreateDividendDto } from './dto/create-dividend.dto';
 import { DividendStatus, Prisma, TransactionType } from '@prisma/client';
 import { DIVIDEND_STATUS } from '@projectua/project-core';
 import { UserDividendsQueryDto } from './dto/user-dividends-query.dto';
+import { BackofficeDividendsQueryDto } from '../backoffice/dto/backoffice-dividends-query.dto';
 
 @Injectable()
 export class DividendsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Admin: всі дивіденди з опційним фільтром по userId або investmentId
-  async findAll(userId?: number, investmentId?: number) {
-    return this.prisma.dividend.findMany({
-      where: {
-        ...(userId && { userId }),
-        ...(investmentId && { investmentId }),
-      },
-      include: {
-        user: {
-          select: { id: true, name: true, surname: true, email: true },
+  // Admin: всі дивіденди з фільтрами
+  async findAll(
+    filters: BackofficeDividendsQueryDto = new BackofficeDividendsQueryDto(),
+  ) {
+    const {
+      userId,
+      investmentId,
+      status,
+      dateFrom,
+      dateTo,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = filters;
+
+    const skip = (page - 1) * limit;
+    const where: Prisma.DividendWhereInput = {};
+
+    if (userId) where.userId = userId;
+    if (investmentId) where.investmentId = investmentId;
+    if (status) where.status = status;
+
+    if (dateFrom ?? dateTo) {
+      where.createdAt = {
+        gte: dateFrom ? new Date(dateFrom) : undefined,
+        lte: dateTo ? new Date(dateTo) : undefined,
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.dividend.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, name: true, surname: true, email: true },
+          },
+          investment: {
+            select: { id: true, startCapital: true, currentCapital: true },
+          },
         },
-        investment: {
-          select: { id: true, startCapital: true, currentCapital: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prisma.dividend.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   // User: власні дивіденди

@@ -14,7 +14,7 @@ import { CreateUserProjectDto } from '../../user-projects/dto/create-user-projec
 import { AdminJwtAuthGuard } from '../../admin-auth/guards/admin-jwt-auth.guard';
 import { AdminRolesGuard } from '../../admin-auth/guards/admin-roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
-import { BackofficeQueryDto } from '../dto/backoffice-query.dto';
+import { BackofficeUserProjectsQueryDto } from '../dto/backoffice-user-projects-query.dto';
 
 @UseGuards(AdminJwtAuthGuard, AdminRolesGuard)
 @Controller('backoffice/user-projects')
@@ -22,7 +22,7 @@ export class BackofficeUserProjectsController {
   constructor(private readonly userProjectsService: UserProjectsService) {}
 
   @Get()
-  findAll(@Query() filters: BackofficeQueryDto) {
+  findAll(@Query() filters: BackofficeUserProjectsQueryDto) {
     return this.userProjectsService.findAll(filters);
   }
 
